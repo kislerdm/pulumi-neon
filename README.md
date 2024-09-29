@@ -1,16 +1,36 @@
-# Pulumi Native Provider Boilerplate
+# Neon Pulumi Provider 
 
-This repository is a boilerplate showing how to create and locally test a native Pulumi provider.
+-----
 
-## Authoring a Pulumi Native Provider
+<div align="center">
+    ⭐ The project needs your support! Please leave a star and become a GitHub sponsor! ⭐
+</div>
 
-This boilerplate creates a working Pulumi-owned provider named `xyz`.
-It implements a random number generator that you can [build and test out for yourself](#test-against-the-example) and then replace the Random code with code specific to your provider.
+-----
 
+Pulumi provider to manage the [Neon](https://neon.tech/) Postgres projects.
+
+## Contents
+
+- [How to contribute](#how-to-contribute)
+    * [Prerequisites](#prerequisites)
+    * [Build & test the Neon provider](#build---test-the-neon-provider)
+        + [Build the provider and install the plugin](#build-the-provider-and-install-the-plugin)
+        + [Test against the example](#test-against-the-example)
+        + [A brief repository overview](#a-brief-repository-overview)
+        + [Additional Details](#additional-details)
+    * [Build Examples](#build-examples)
+- [References](#references)
+
+## How to contribute 
+
+The Neon Pulumi provider is a community effort. Please do not hesitate to raise the Github issue to request new functionality,
+or to report regression, or misbehaviour of the provider.
 
 ### Prerequisites
 
-Prerequisites for this repository are already satisfied by the [Pulumi Devcontainer](https://github.com/pulumi/devcontainer) if you are using Github Codespaces, or VSCode.
+Prerequisites for this repository are already satisfied by the [Pulumi Devcontainer](https://github.com/pulumi/devcontainer) 
+if you are using Github Codespaces, or VSCode.
 
 If you are not using VSCode, you will need to ensure the following tools are installed and present in your `$PATH`:
 
@@ -22,42 +42,14 @@ If you are not using VSCode, you will need to ensure the following tools are ins
 * [Python](https://www.python.org/downloads/) (called as `python3`).  For recent versions of MacOS, the system-installed version is fine.
 * [.NET](https://dotnet.microsoft.com/download)
 
+### Build & test the Neon provider
 
-### Build & test the boilerplate XYZ provider
-
-1. Create a new Github CodeSpaces environment using this repository.
-1. Open a terminal in the CodeSpaces environment.
 1. Run `make build install` to build and install the provider.
-1. Run `make gen_examples` to generate the example programs in `examples/` off of the source `examples/yaml` example program.
-1. Run `make up` to run the example program in `examples/yaml`.
-1. Run `make down` to tear down the example program.
+2. Run `make gen_examples` to generate the example programs in `examples/` off of the source `examples/yaml` example program.
+3. Run `make up` to run the example program in `examples/yaml`.
+4. Run `make down` to tear down the example program.
 
-### Creating a new provider repository
-
-Pulumi offers this repository as a [GitHub template repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) for convenience.  From this repository:
-
-1. Click "Use this template".
-1. Set the following options:
-   * Owner: pulumi 
-   * Repository name: pulumi-xyz-native (replace "xyz" with the name of your provider)
-   * Description: Pulumi provider for xyz
-   * Repository type: Public
-1. Clone the generated repository.
-
-From the templated repository:
-
-1. Run the following command to update files to use the name of your provider (third-party: use your GitHub organization/username):
-
-    ```bash
-    make prepare NAME=foo REPOSITORY=github.com/pulumi/pulumi-foo ORG=myorg
-    ```
-
-   This will do the following:
-   - rename folders in `provider/cmd` to `pulumi-resource-{NAME}`
-   - replace dependencies in `provider/go.mod` to reflect your repository name
-   - find and replace all instances of the boilerplate `xyz` with the `NAME` of your provider.
-   - find and replace all instances of the boilerplate `abc` with the `ORG` of your provider.
-   - replace all instances of the `github.com/pulumi/pulumi-xyz` repository with the `REPOSITORY` location
+Note that you could execute the commands in the Github CodeSpaces environment using this repository.
 
 #### Build the provider and install the plugin
 
@@ -76,7 +68,7 @@ This will:
    
 ```bash
 $ cd examples/simple
-$ yarn link @pulumi/xyz
+$ yarn link @pulumi/neon
 $ yarn install
 $ pulumi stack init test
 $ pulumi up
@@ -89,16 +81,16 @@ Now that you have completed all of the above steps, you have a working provider 
 You now have:
 
 1. A `provider/` folder containing the building and implementation logic
-    1. `cmd/pulumi-resource-xyz/main.go` - holds the provider's sample implementation logic.
-2. `deployment-templates` - a set of files to help you around deployment and publication
-3. `sdk` - holds the generated code libraries created by `pulumi-gen-xyz/main.go`
-4. `examples` a folder of Pulumi programs to try locally and/or use in CI.
-5. A `Makefile` and this `README`.
+2. `cmd/pulumi-resource-neon/main.go` - holds the provider's sample implementation logic.
+3. `deployment-templates` - a set of files to help you around deployment and publication
+4. `sdk` - holds the generated code libraries created by `pulumi-gen-neon/main.go`
+5. `examples` a folder of Pulumi programs to try locally and/or use in CI.
+6. A `Makefile` and this `README`.
 
 #### Additional Details
 
-This repository depends on the pulumi-go-provider library. For more details on building providers, please check
-the [Pulumi Go Provider docs](https://github.com/pulumi/pulumi-go-provider).
+This repository depends on the [pulumi-go-provider](https://github.com/pulumi/pulumi-go-provider) 
+and [Neon Go SDK](https://github.com/kislerdm/neon-sdk-go) libraries. 
 
 ### Build Examples
 
@@ -106,12 +98,9 @@ Create an example program using the resources defined in your provider, and plac
 
 You can now repeat the steps for [build, install, and test](#test-against-the-example).
 
-## Configuring CI and releases
-
-1. Follow the instructions laid out in the [deployment templates](./deployment-templates/README-DEPLOYMENT.md).
-
 ## References
 
-Other resources/examples for implementing providers:
+* [Neon API](https://api-docs.neon.tech/reference/getting-started-with-neon-api)
+* [Neon Go SDK](https://pkg.go.dev/github.com/kislerdm/neon-sdk-go)
 * [Pulumi Command provider](https://github.com/pulumi/pulumi-command/blob/master/provider/pkg/provider/provider.go)
 * [Pulumi Go Provider repository](https://github.com/pulumi/pulumi-go-provider)

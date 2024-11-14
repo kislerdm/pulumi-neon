@@ -42,7 +42,7 @@ func Provider() p.Provider {
 			License:           "Apache-2.0",
 		},
 		Resources: []infer.InferredResource{
-			infer.Resource[*Project, ProjectArgs, ProjectState](),
+			infer.Resource[Project, ProjectArgs, ProjectState](),
 		},
 		Config: infer.Config[*Config](),
 		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{

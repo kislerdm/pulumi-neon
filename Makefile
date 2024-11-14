@@ -27,7 +27,6 @@ help: ## Prints help message.
 ensure::
 	cd provider && go mod tidy
 	cd sdk && go mod tidy
-	cd tests && go mod tidy
 
 provider:: ## Builds provider.
 	(cd provider && go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/${VERSION_PATH}=${VERSION}" $(PROJECT)/${PROVIDER_PATH}/cmd/$(PROVIDER))
@@ -72,6 +71,9 @@ python_sdk:: ## Generates python SDK.
 		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(PYPI_VERSION)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist
+
+gen_schema: ## Generates schema.json.
+	pulumi package get-schema bin/$(PROVIDER) > sdk/schema.json
 
 gen_examples: gen_go_example \
 		gen_nodejs_example \

@@ -46,6 +46,7 @@ func (p Project) Create(ctx context.Context, name string, inputs ProjectArgs, pr
 			return id, output, err
 		}
 
+		id = resp.Project.ID
 		output.ID = resp.Project.ID
 		output.OrgID = resp.Project.OrgID
 	}

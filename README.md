@@ -26,10 +26,7 @@ or to report regression, or misbehaviour of the provider.
 
 ### Prerequisites
 
-Prerequisites for this repository are already satisfied by the [Pulumi Devcontainer](https://github.com/pulumi/devcontainer) 
-if you are using Github Codespaces, or VSCode.
-
-If you are not using VSCode, you will need to ensure the following tools are installed and present in your `$PATH`:
+You will need to ensure the following tools are installed and present in your `$PATH`:
 
 * [`pulumictl`](https://github.com/pulumi/pulumictl#installation)
 * [Go 1.21](https://golang.org/dl/) or 1.latest

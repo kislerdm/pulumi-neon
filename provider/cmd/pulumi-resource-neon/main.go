@@ -1,4 +1,5 @@
 // Copyright 2016-2023, Pulumi Corporation.
+// Copyright 2024, Dmitry Kisler.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +16,16 @@
 package main
 
 import (
+	"log"
+
 	p "github.com/pulumi/pulumi-go-provider"
 
-	xyz "github.com/pulumi/pulumi-xyz/provider"
+	neon "github.com/kislerdm/pulumi-neon/provider"
 )
 
 // Serve the provider against Pulumi's Provider protocol.
-func main() { p.RunProvider(xyz.Name, xyz.Version, xyz.Provider()) }
+func main() {
+	if err := p.RunProvider(neon.Name, neon.Version, neon.Provider()); err != nil {
+		log.Fatal(err)
+	}
+}

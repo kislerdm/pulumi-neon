@@ -93,3 +93,35 @@ func isProjectStateUpdated(olds ProjectState, news ProjectArgs) bool {
 	// TODO: extend
 	return olds.Name != news.Name
 }
+
+func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) (
+	canonicalID string, normalizedInputs ProjectArgs, normalizedState ProjectState, err error) {
+	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
+	if err != nil {
+		err = fmt.Errorf("could not init Neon Client: %w", err)
+	}
+
+	var resp sdk.ProjectResponse
+	resp, err = c.GetProject(id)
+	if err == nil {
+		canonicalID = resp.Project.ID
+		normalizedInputs.Name = &resp.Project.Name
+		normalizedInputs.OrgID = resp.Project.OrgID
+		normalizedState = ProjectState{
+			ProjectArgs: normalizedInputs,
+			ID:          resp.Project.ID,
+		}
+	}
+
+	return canonicalID, normalizedInputs, normalizedState, err
+}
+
+func (p Project) Delete(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) error {
+	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
+	if err != nil {
+		err = fmt.Errorf("could not init Neon Client: %w", err)
+	} else {
+		_, err = c.DeleteProject(id)
+	}
+	return err
+}

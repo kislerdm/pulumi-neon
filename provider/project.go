@@ -17,10 +17,8 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/kislerdm/neon-sdk-go"
-	"github.com/pulumi/pulumi-go-provider/infer"
 )
 
 type Project struct{}
@@ -37,10 +35,7 @@ type ProjectState struct {
 
 func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, preview bool) (
 	id string, output ProjectState, err error) {
-	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
-	if err != nil {
-		err = fmt.Errorf("could not init Neon Client: %w", err)
-	}
+	c, err := NewSDKClient(ctx)
 
 	if !preview && err == nil {
 		var resp sdk.CreatedProject
@@ -67,12 +62,9 @@ func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, previ
 
 func (p Project) Update(ctx context.Context, id string, olds ProjectState, news ProjectArgs, preview bool) (
 	output ProjectState, err error) {
-	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
-	if err != nil {
-		err = fmt.Errorf("could not init Neon Client: %w", err)
-	}
+	c, err := NewSDKClient(ctx)
 
-	if !preview && isProjectStateUpdated(olds, news) {
+	if err == nil && !preview && isProjectStateUpdated(olds, news) {
 		var resp sdk.UpdateProjectRespObj
 		resp, err = c.UpdateProject(id, sdk.ProjectUpdateRequest{
 			Project: sdk.ProjectUpdateRequestProject{
@@ -96,20 +88,18 @@ func isProjectStateUpdated(olds ProjectState, news ProjectArgs) bool {
 
 func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) (
 	canonicalID string, normalizedInputs ProjectArgs, normalizedState ProjectState, err error) {
-	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
-	if err != nil {
-		err = fmt.Errorf("could not init Neon Client: %w", err)
-	}
-
-	var resp sdk.ProjectResponse
-	resp, err = c.GetProject(id)
+	c, err := NewSDKClient(ctx)
 	if err == nil {
-		canonicalID = resp.Project.ID
-		normalizedInputs.Name = &resp.Project.Name
-		normalizedInputs.OrgID = resp.Project.OrgID
-		normalizedState = ProjectState{
-			ProjectArgs: normalizedInputs,
-			ID:          resp.Project.ID,
+		var resp sdk.ProjectResponse
+		resp, err = c.GetProject(id)
+		if err == nil {
+			canonicalID = resp.Project.ID
+			normalizedInputs.Name = &resp.Project.Name
+			normalizedInputs.OrgID = resp.Project.OrgID
+			normalizedState = ProjectState{
+				ProjectArgs: normalizedInputs,
+				ID:          resp.Project.ID,
+			}
 		}
 	}
 
@@ -117,10 +107,8 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 }
 
 func (p Project) Delete(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) error {
-	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
-	if err != nil {
-		err = fmt.Errorf("could not init Neon Client: %w", err)
-	} else {
+	c, err := NewSDKClient(ctx)
+	if err == nil {
 		_, err = c.DeleteProject(id)
 	}
 	return err

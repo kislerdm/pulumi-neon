@@ -16,6 +16,11 @@
 package provider
 
 import (
+	"context"
+	"fmt"
+
+	sdk "github.com/kislerdm/neon-sdk-go"
+	"github.com/kislerdm/pulumi-neon/provider/telemetry"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi-go-provider/middleware/schema"
@@ -60,4 +65,15 @@ type Config struct {
 func (c *Config) Annotate(a infer.Annotator) {
 	a.Describe(&c.APIKey, "Neon API token.")
 	a.SetDefault(&c.APIKey, nil, "NEON_API_KEY")
+}
+
+func NewSDKClient(ctx context.Context) (*sdk.Client, error) {
+	c, err := sdk.NewClient(sdk.Config{
+		Key:        infer.GetConfig[*Config](ctx).APIKey,
+		HTTPClient: telemetry.NewHTTPClient("kislerdm/"+Name, Version),
+	})
+	if err != nil {
+		err = fmt.Errorf("could not init Neon Client: %w", err)
+	}
+	return c, err
 }

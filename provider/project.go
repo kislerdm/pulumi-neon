@@ -25,20 +25,30 @@ import (
 
 type Project struct{}
 
-func (p Project) Create(ctx context.Context, name string, inputs ProjectArgs, preview bool) (
-	id string, output ProjectState, err error) {
+type ProjectArgs struct {
+	Name  *string `pulumi:"name,optional"`
+	OrgID *string `pulumi:"org_id,optional"`
+}
 
+type ProjectState struct {
+	ProjectArgs
+	ID string `pulumi:"identifier"`
+}
+
+func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, preview bool) (
+	id string, output ProjectState, err error) {
 	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
 	if err != nil {
 		err = fmt.Errorf("could not init Neon Client: %w", err)
 	}
 
-	if err == nil {
+	if !preview && err == nil {
 		var resp sdk.CreatedProject
 		resp, err = c.CreateProject(sdk.ProjectCreateRequest{
 			Project: sdk.ProjectCreateRequestProject{
-				Name:  &name,
+				Name:  inputs.Name,
 				OrgID: inputs.OrgID,
+				// 	TODO: add more attributes
 			},
 		})
 
@@ -46,19 +56,40 @@ func (p Project) Create(ctx context.Context, name string, inputs ProjectArgs, pr
 			return id, output, err
 		}
 
-		id = resp.Project.ID
-		output.ID = resp.Project.ID
-		output.OrgID = resp.Project.OrgID
+		id = resp.ProjectResponse.Project.ID
+		output.ID = resp.ProjectResponse.Project.ID
+		output.OrgID = resp.ProjectResponse.Project.OrgID
+		output.Name = &resp.ProjectResponse.Project.Name
 	}
 
 	return id, output, err
 }
 
-type ProjectArgs struct {
-	OrgID *string `pulumi:"org_id,optional"`
+func (p Project) Update(ctx context.Context, id string, olds ProjectState, news ProjectArgs, preview bool) (
+	output ProjectState, err error) {
+	c, err := sdk.NewClient(sdk.Config{Key: infer.GetConfig[*Config](ctx).APIKey})
+	if err != nil {
+		err = fmt.Errorf("could not init Neon Client: %w", err)
+	}
+
+	if !preview && isProjectStateUpdated(olds, news) {
+		var resp sdk.UpdateProjectRespObj
+		resp, err = c.UpdateProject(id, sdk.ProjectUpdateRequest{
+			Project: sdk.ProjectUpdateRequestProject{
+				Name: news.Name,
+				// 	TODO: add more attributes
+			},
+		})
+
+		if err == nil {
+			output.Name = &resp.ProjectResponse.Project.Name
+		}
+	}
+
+	return output, err
 }
 
-type ProjectState struct {
-	ProjectArgs
-	ID string `pulumi:"identifier"`
+func isProjectStateUpdated(olds ProjectState, news ProjectArgs) bool {
+	// TODO: extend
+	return olds.Name != news.Name
 }

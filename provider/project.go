@@ -106,7 +106,7 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 	return canonicalID, normalizedInputs, normalizedState, err
 }
 
-func (p Project) Delete(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) error {
+func (p Project) Delete(ctx context.Context, id string, _ ProjectState) error {
 	c, err := NewSDKClient(ctx)
 	if err == nil {
 		_, err = c.DeleteProject(id)

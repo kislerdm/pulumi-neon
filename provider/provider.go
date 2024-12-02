@@ -27,7 +27,7 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 )
 
-var Version string
+var Version = "testAcc"
 
 const (
 	Name = "neon"

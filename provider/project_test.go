@@ -81,3 +81,42 @@ func TestProject(t *testing.T) {
 		})
 	})
 }
+
+func TestProjectInOrganization(t *testing.T) {
+	if v, _ := strconv.ParseBool(os.Getenv("ACC_TEST")); !v {
+		t.Skip("ACC_TEST is not set")
+	}
+
+	orgID := os.Getenv("ORG_ID")
+	if orgID == "" {
+		t.Skip("ORG_ID is not set")
+	}
+
+	token := os.Getenv("NEON_API_KEY")
+	if token == "" {
+		t.Fatal("neon API key must be set as env variable NEON_API_KEY for integration tests")
+	}
+
+	client, err := sdk.NewClient(sdk.Config{Key: token})
+	assert.NoError(t, err)
+
+	wantName := "pulumi-project-test-in-org"
+
+	integration.ProgramTest(t, &integration.ProgramTestOptions{
+		Quick:       true,
+		SkipRefresh: true,
+		PrepareProject: func(projinfo *engine.Projinfo) error {
+			return fsutil.CopyFile(projinfo.Root, sdkPath, nil)
+		},
+		Dir: path.Join(cwd, "acc-test", "project", "default-in-org"),
+		Env: []string{"ORG_ID=" + orgID},
+		Secrets: map[string]string{
+			"neon:api_key": token,
+		},
+		ExtraRuntimeValidation: func(t *testing.T, _ integration.RuntimeValidationStackInfo) {
+			resp, err := client.ListProjects(nil, nil, &wantName, &orgID)
+			assert.NoError(t, err)
+			assert.Len(t, resp.Projects, 1)
+		},
+	})
+}

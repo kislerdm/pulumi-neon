@@ -2,6 +2,7 @@ package provider
 
 import (
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"testing"
@@ -24,6 +25,12 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = exec.Command("cd", path.Join(cwd, ".."), "&&", "make", "go_sdk").Run()
+	if err != nil {
+		panic(err)
+	}
+
 	sdkPath = path.Join(cwd, "..", "sdk")
 }
 

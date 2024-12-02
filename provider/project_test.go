@@ -44,7 +44,7 @@ func TestProject(t *testing.T) {
 		t.Fatal("neon API key must be set as env variable NEON_API_KEY for integration tests")
 	}
 
-	_, err := sdk.NewClient(sdk.Config{Key: token})
+	client, err := sdk.NewClient(sdk.Config{Key: token})
 	assert.NoError(t, err)
 
 	t.Run("default config", func(t *testing.T) {
@@ -57,6 +57,26 @@ func TestProject(t *testing.T) {
 			Dir: path.Join(cwd, "acc-test", "project", "default"),
 			Secrets: map[string]string{
 				"neon:api_key": token,
+			},
+		})
+	})
+
+	t.Run("custom project name pulumi-project-test-custom-name", func(t *testing.T) {
+		wantName := "pulumi-project-test-custom-name"
+		integration.ProgramTest(t, &integration.ProgramTestOptions{
+			Quick:       true,
+			SkipRefresh: true,
+			PrepareProject: func(projinfo *engine.Projinfo) error {
+				return fsutil.CopyFile(projinfo.Root, sdkPath, nil)
+			},
+			Dir: path.Join(cwd, "acc-test", "project", "custom-name"),
+			Secrets: map[string]string{
+				"neon:api_key": token,
+			},
+			ExtraRuntimeValidation: func(t *testing.T, _ integration.RuntimeValidationStackInfo) {
+				resp, err := client.ListProjects(nil, nil, &wantName, nil)
+				assert.NoError(t, err)
+				assert.Len(t, resp.Projects, 1)
 			},
 		})
 	})

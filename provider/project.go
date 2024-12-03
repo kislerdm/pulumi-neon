@@ -17,6 +17,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	sdk "github.com/kislerdm/neon-sdk-go"
 )
@@ -24,13 +26,21 @@ import (
 type Project struct{}
 
 type ProjectArgs struct {
-	Name  *string `pulumi:"name,optional"`
-	OrgID *string `pulumi:"org_id,optional"`
+	Name                *string `pulumi:"name,optional"`
+	OrgID               *string `pulumi:"org_id,optional"`
+	DefaultBranchName   *string `pulumi:"default_branch_name,optional"`
+	DefaultRoleName     *string `pulumi:"default_role_name,optional"`
+	DefaultDatabaseName *string `pulumi:"default_database_name,optional"`
 }
 
 type ProjectState struct {
 	ProjectArgs
-	ID string `pulumi:"identifier"`
+	ID                        string  `pulumi:"identifier"`
+	DefaultRolePassword       *string `pulumi:"default_role_password"`
+	ConnectionURI             string  `pulumi:"connection_uri"`
+	ConnectionURIPooler       string  `pulumi:"connection_uri_pooler"`
+	DefaultEndpointHost       string  `pulumi:"default_endpoint_host"`
+	DefaultEndpointHostPooler string  `pulumi:"default_endpoint_host_pooler"`
 }
 
 func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, preview bool) (
@@ -41,9 +51,13 @@ func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, previ
 		var resp sdk.CreatedProject
 		resp, err = c.CreateProject(sdk.ProjectCreateRequest{
 			Project: sdk.ProjectCreateRequestProject{
+				Branch: &sdk.ProjectCreateRequestProjectBranch{
+					DatabaseName: inputs.DefaultDatabaseName,
+					Name:         inputs.DefaultBranchName,
+					RoleName:     inputs.DefaultRoleName,
+				},
 				Name:  inputs.Name,
 				OrgID: inputs.OrgID,
-				// 	TODO: add more attributes
 			},
 		})
 
@@ -55,9 +69,39 @@ func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, previ
 		output.ID = resp.ProjectResponse.Project.ID
 		output.OrgID = resp.ProjectResponse.Project.OrgID
 		output.Name = &resp.ProjectResponse.Project.Name
+		output.DefaultDatabaseName = &resp.DatabasesResponse.Databases[0].Name
+		output.DefaultRoleName = &resp.DatabasesResponse.Databases[0].OwnerName
+		output.DefaultBranchName = &resp.BranchResponse.Branch.Name
+
+		var pass *string
+		for _, role := range resp.RolesResponse.Roles {
+			if output.DefaultRoleName != nil && role.Name == *output.DefaultRoleName {
+				pass = role.Password
+				break
+			}
+		}
+
+		output.DefaultRolePassword = pass
+		host := resp.EndpointsResponse.Endpoints[0].Host
+		output.DefaultEndpointHost = host
+		output.DefaultEndpointHostPooler = newHostPooler(host)
+		output.ConnectionURI = resp.ConnectionURIs[0].ConnectionURI
+		output.ConnectionURIPooler = newURIPooler(output.ConnectionURI)
 	}
 
 	return id, output, err
+}
+
+func newHostPooler(host string) string {
+	const poolerSuffix = "-pooler"
+	els := strings.SplitN(host, ".", 2)
+	return fmt.Sprintf("%s.%s", els[0]+poolerSuffix, els[1])
+}
+
+func newURIPooler(uri string) string {
+	els := strings.SplitN(uri, "@", 2)
+	suffParts := strings.SplitN(els[1], "/", 2)
+	return fmt.Sprintf("%s@%s/%s", els[0], newHostPooler(suffParts[0]), suffParts[1])
 }
 
 func (p Project) Update(ctx context.Context, id string, olds ProjectState, news ProjectArgs, preview bool) (

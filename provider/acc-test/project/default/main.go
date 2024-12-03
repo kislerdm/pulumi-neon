@@ -7,7 +7,12 @@ import (
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		_, err := provider.NewProject(ctx, "this", nil)
-		return err
+		p, err := provider.NewProject(ctx, "this", nil)
+		if err != nil {
+			return err
+		}
+		ctx.Export("connection_uri", p.Connection_uri)
+		ctx.Export("connection_uri_pooler", p.Connection_uri_pooler)
+		return nil
 	})
 }

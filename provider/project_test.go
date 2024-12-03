@@ -1,12 +1,15 @@
 package provider
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
 	"testing"
 
+	"github.com/jackc/pgx/v5"
 	sdk "github.com/kislerdm/neon-sdk-go"
 	"github.com/pulumi/pulumi/pkg/v3/engine"
 	"github.com/pulumi/pulumi/pkg/v3/testing/integration"
@@ -58,6 +61,10 @@ func TestProject(t *testing.T) {
 			Secrets: map[string]string{
 				"neon:api_key": token,
 			},
+			ExtraRuntimeValidation: func(t *testing.T, stack integration.RuntimeValidationStackInfo) {
+				assert.NoError(t, testQuery(stack.Outputs["connection_uri"].(string)))
+				assert.NoError(t, testQuery(stack.Outputs["connection_uri_pooler"].(string)))
+			},
 		})
 	})
 
@@ -80,6 +87,32 @@ func TestProject(t *testing.T) {
 			},
 		})
 	})
+}
+
+func testQuery(uri string) error {
+	conn, err := pgx.Connect(context.TODO(), uri)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close(context.Background()) }()
+
+	wantVal := 1
+	r, _ := conn.Query(context.TODO(), fmt.Sprintf("select %d as val;", wantVal))
+	defer func() { r.Close() }()
+
+	vals, err := pgx.CollectRows(r, func(row pgx.CollectableRow) (int, error) {
+		var val int
+		err := row.Scan(&val)
+		return val, err
+	})
+
+	if err == nil {
+		if len(vals) != 1 || vals[0] != wantVal {
+			err = fmt.Errorf("expected to return %d as the query result", wantVal)
+		}
+	}
+
+	return err
 }
 
 func TestProjectInOrganization(t *testing.T) {

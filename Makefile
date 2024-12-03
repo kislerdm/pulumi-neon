@@ -72,7 +72,7 @@ python_sdk:: ## Generates python SDK.
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist
 
-gen_schema: ## Generates schema.json.
+gen_schema:: ## Generates schema.json.
 	pulumi package get-schema bin/$(PROVIDER) > sdk/schema.json
 
 gen_examples: gen_go_example \

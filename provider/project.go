@@ -18,6 +18,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	sdk "github.com/kislerdm/neon-sdk-go"
@@ -140,10 +141,73 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 			canonicalID = resp.Project.ID
 			normalizedInputs.Name = &resp.Project.Name
 			normalizedInputs.OrgID = resp.Project.OrgID
+
+			var respBranches sdk.ListProjectBranchesRespObj
+			respBranches, err = c.ListProjectBranches(canonicalID, nil)
+			if err != nil {
+				return canonicalID, normalizedInputs, normalizedState, err
+			}
+
+			var defaultBranchID string
+
+			for _, br := range respBranches.BranchesResponse.Branches {
+				if br.Default {
+					normalizedInputs.DefaultBranchName = &br.Name
+					defaultBranchID = br.ID
+				}
+				break
+			}
+
+			var respDB sdk.DatabasesResponse
+			respDB, err = c.ListProjectBranchDatabases(canonicalID, defaultBranchID)
+			if err != nil {
+				return "", ProjectArgs{}, ProjectState{}, err
+			}
+
+			slices.SortStableFunc(respDB.Databases, func(a, b sdk.Database) int {
+				return a.CreatedAt.Compare(b.CreatedAt)
+			})
+
+			// the earliest created database is assumed default
+			earliestCreatedDatabase := respDB.Databases[0]
+			normalizedInputs.DefaultDatabaseName = &earliestCreatedDatabase.Name
+			normalizedInputs.DefaultRoleName = &earliestCreatedDatabase.OwnerName
+
 			normalizedState = ProjectState{
 				ProjectArgs: normalizedInputs,
-				ID:          resp.Project.ID,
+				ID:          canonicalID,
 			}
+
+			var respPass sdk.RolePasswordResponse
+			respPass, err = c.GetProjectBranchRolePassword(canonicalID, defaultBranchID, earliestCreatedDatabase.OwnerName)
+			if err != nil {
+				return "", ProjectArgs{}, ProjectState{}, err
+			}
+
+			normalizedState.DefaultRolePassword = &respPass.Password
+
+			var respEndpoints sdk.EndpointsResponse
+			respEndpoints, err = c.ListProjectBranchEndpoints(canonicalID, defaultBranchID)
+			if err != nil {
+				return "", ProjectArgs{}, ProjectState{}, err
+			}
+			// the earliest created endpoint is assumed default
+			slices.SortStableFunc(respEndpoints.Endpoints, func(a, b sdk.Endpoint) int {
+				return a.CreatedAt.Compare(b.CreatedAt)
+			})
+
+			earliestCreatedEndpoint := respEndpoints.Endpoints[0]
+			normalizedState.DefaultEndpointHost = earliestCreatedEndpoint.Host
+			normalizedState.DefaultEndpointHostPooler = newHostPooler(earliestCreatedEndpoint.Host)
+
+			var respURI sdk.ConnectionURIResponse
+			respURI, err = c.GetConnectionURI(canonicalID, &defaultBranchID, &earliestCreatedEndpoint.ID,
+				earliestCreatedDatabase.Name, earliestCreatedDatabase.OwnerName, nil)
+			if err != nil {
+				return "", ProjectArgs{}, ProjectState{}, err
+			}
+			normalizedState.ConnectionURI = respURI.URI
+			normalizedState.ConnectionURIPooler = newURIPooler(respURI.URI)
 		}
 	}
 

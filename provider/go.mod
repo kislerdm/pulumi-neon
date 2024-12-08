@@ -3,7 +3,8 @@ module github.com/kislerdm/pulumi-neon/provider
 go 1.23.1
 
 require (
-	github.com/kislerdm/neon-sdk-go v0.9.0
+	github.com/jackc/pgx/v5 v5.7.1
+	github.com/kislerdm/neon-sdk-go v0.11.0
 	github.com/pulumi/pulumi-go-provider v0.23.0
 	github.com/pulumi/pulumi/pkg/v3 v3.138.0
 	github.com/pulumi/pulumi/sdk/v3 v3.138.0
@@ -98,7 +99,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.7.1 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

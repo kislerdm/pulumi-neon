@@ -1,0 +1,139 @@
+{
+  "name": "neon",
+  "displayName": "neon",
+  "version": "0.0.1",
+  "description": "Pulumi Neon Provider",
+  "keywords": [
+    "pulumi",
+    "neon",
+    "category/cloud"
+  ],
+  "homepage": "https://github.com/kislerdm/pulumi-neon",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/kislerdm/pulumi-neon",
+  "logoUrl": "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
+  "pluginDownloadURL": "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}",
+  "publisher": "kislerdm",
+  "meta": {
+    "moduleFormat": "(.*)"
+  },
+  "config": {
+    "variables": {
+      "api_key": {
+        "type": "string",
+        "description": "Neon API token.",
+        "defaultInfo": {
+          "environment": [
+            "NEON_API_KEY"
+          ]
+        }
+      }
+    },
+    "defaults": [
+      "api_key"
+    ]
+  },
+  "provider": {
+    "properties": {
+      "api_key": {
+        "type": "string",
+        "description": "Neon API token.",
+        "defaultInfo": {
+          "environment": [
+            "NEON_API_KEY"
+          ]
+        }
+      }
+    },
+    "type": "object",
+    "required": [
+      "api_key"
+    ],
+    "inputProperties": {
+      "api_key": {
+        "type": "string",
+        "description": "Neon API token.",
+        "defaultInfo": {
+          "environment": [
+            "NEON_API_KEY"
+          ]
+        }
+      }
+    },
+    "requiredInputs": [
+      "api_key"
+    ]
+  },
+  "resources": {
+    "neon:provider:Project": {
+      "properties": {
+        "connection_uri": {
+          "type": "string",
+          "description": "URI to connect to the default database using the default endpoint."
+        },
+        "connection_uri_pooler": {
+          "type": "string",
+          "description": "URI to connect to the default database using the default endpoint in the pooler mode."
+        },
+        "default_branch_name": {
+          "type": "string",
+          "description": "Neon default branch's name."
+        },
+        "default_database_name": {
+          "type": "string",
+          "description": "Neon default database's name."
+        },
+        "default_endpoint_host": {
+          "type": "string",
+          "description": "The default endpoint's host."
+        },
+        "default_endpoint_host_pooler": {
+          "type": "string",
+          "description": "The default endpoint's host with the pooler mode active."
+        },
+        "default_role_name": {
+          "type": "string",
+          "description": "Neon default role's name."
+        },
+        "default_role_password": {
+          "type": "string",
+          "description": "Neon default role's password."
+        },
+        "identifier": {
+          "type": "string",
+          "description": "Project ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Neon project name."
+        },
+        "org_id": {
+          "type": "string",
+          "description": "Neon Org ID."
+        }
+      },
+      "type": "object",
+      "required": [
+        "connection_uri",
+        "connection_uri_pooler",
+        "default_branch_name",
+        "default_database_name",
+        "default_endpoint_host",
+        "default_endpoint_host_pooler",
+        "default_role_name",
+        "default_role_password",
+        "identifier"
+      ],
+      "inputProperties": {
+        "name": {
+          "type": "string",
+          "description": "Neon project name."
+        },
+        "org_id": {
+          "type": "string",
+          "description": "Neon Org ID."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "resource": true,
+  "name": "neon",
+  "server": "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}"
+}

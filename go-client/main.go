@@ -10,8 +10,8 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		_, err := provider.NewProject(ctx, "bar", &provider.ProjectArgs{
-			Name: pulumi.String("bar"),
-		})
+			Name: pulumi.String("foo"),
+		}, pulumi.Protect(true))
 		if err != nil {
 			log.Println(err)
 		}

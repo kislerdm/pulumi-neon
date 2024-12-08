@@ -136,6 +136,7 @@ func (pr Project) Update(ctx context.Context, id string, olds ProjectState, news
 		return output, err
 	}
 
+	_, _, output, err = pr.Read(ctx, id, news, olds)
 	if !preview {
 		var resp sdk.UpdateProjectRespObj
 		resp, err = c.UpdateProject(id, sdk.ProjectUpdateRequest{
@@ -144,13 +145,9 @@ func (pr Project) Update(ctx context.Context, id string, olds ProjectState, news
 				// 	TODO: add more attributes
 			},
 		})
-
 		if err == nil {
 			output.Name = &resp.ProjectResponse.Project.Name
 		}
-
-	} else {
-		_, _, output, err = pr.Read(ctx, id, news, olds)
 	}
 
 	return output, err
@@ -158,7 +155,6 @@ func (pr Project) Update(ctx context.Context, id string, olds ProjectState, news
 
 func (pr Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) (
 	canonicalID string, normalizedInputs ProjectArgs, normalizedState ProjectState, err error) {
-
 	c, err := NewSDKClient(ctx)
 	if err == nil {
 		var resp sdk.ProjectResponse
@@ -250,8 +246,7 @@ func (pr Project) Delete(ctx context.Context, id string, _ ProjectState) error {
 
 func (pr Project) Diff(ctx context.Context, id string, olds ProjectState, news ProjectArgs) (diff p.DiffResponse,
 	err error) {
-
-	_, _, stateCloud, err := pr.Read(ctx, id, news, olds)
+	_, args, stateCloud, err := pr.Read(ctx, id, news, olds)
 	if err != nil {
 		return diff, fmt.Errorf("could not read the current real state: %w", err)
 	}
@@ -260,7 +255,7 @@ func (pr Project) Diff(ctx context.Context, id string, olds ProjectState, news P
 	drift := projectDrift(stateCloud, olds)
 
 	// define the change between the old and the new inputs
-	inputChange := projectInputChange(olds, news)
+	inputChange := projectInputChange(args, news)
 
 	o := p.DiffResponse{
 		DeleteBeforeReplace: drift.DeleteBeforeReplace || inputChange.DeleteBeforeReplace,
@@ -272,7 +267,7 @@ func (pr Project) Diff(ctx context.Context, id string, olds ProjectState, news P
 	return o, err
 }
 
-func projectInputChange(olds ProjectState, news ProjectArgs) p.DiffResponse {
+func projectInputChange(olds ProjectArgs, news ProjectArgs) p.DiffResponse {
 	var o = p.DiffResponse{
 		DeleteBeforeReplace: false,
 		HasChanges:          false,
@@ -280,7 +275,7 @@ func projectInputChange(olds ProjectState, news ProjectArgs) p.DiffResponse {
 	}
 
 	// the project's name should be changed if the new input differs from the old pulumi input
-	var changedName = news.Name != nil && !reflect.DeepEqual(news.Name, olds.inputState.Name)
+	var changedName = news.Name != nil && !reflect.DeepEqual(news.Name, olds.Name)
 
 	// the cloud state will not be changed if the name was removed from the manifest, or set to the empty string
 	if news.Name == nil || (news.Name != nil && *news.Name == "") {
@@ -296,7 +291,7 @@ func projectInputChange(olds ProjectState, news ProjectArgs) p.DiffResponse {
 	}
 
 	// the project should be moved to the org id the new input differs from the old pulumi input
-	var changedOrgID = !reflect.DeepEqual(news.OrgID, olds.inputState.OrgID)
+	var changedOrgID = !reflect.DeepEqual(news.OrgID, olds.OrgID)
 	if changedOrgID {
 		o.HasChanges = true
 		o.DetailedDiff["org_id"] = p.PropertyDiff{

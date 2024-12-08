@@ -21,30 +21,54 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	sdk "github.com/kislerdm/neon-sdk-go"
+	p "github.com/pulumi/pulumi-go-provider"
+	"github.com/pulumi/pulumi-go-provider/infer"
 )
 
 type Project struct{}
 
 type ProjectArgs struct {
-	Name                *string `pulumi:"name,optional"`
-	OrgID               *string `pulumi:"org_id,optional"`
-	DefaultBranchName   *string `pulumi:"default_branch_name,optional"`
-	DefaultRoleName     *string `pulumi:"default_role_name,optional"`
-	DefaultDatabaseName *string `pulumi:"default_database_name,optional"`
+	Name  *string `pulumi:"name,optional"`
+	OrgID *string `pulumi:"org_id,optional"`
+}
+
+func (pr *ProjectArgs) Annotate(a infer.Annotator) {
+	a.Describe(&pr.Name, "Neon project name.")
+	a.Describe(&pr.OrgID, "Neon Org ID.")
 }
 
 type ProjectState struct {
 	ProjectArgs
+	inputState                ProjectArgs
 	ID                        string  `pulumi:"identifier"`
-	DefaultRolePassword       *string `pulumi:"default_role_password"`
-	ConnectionURI             string  `pulumi:"connection_uri"`
-	ConnectionURIPooler       string  `pulumi:"connection_uri_pooler"`
+	DefaultBranchName         *string `pulumi:"default_branch_name,optional"`
+	DefaultRoleName           *string `pulumi:"default_role_name,optional"`
+	DefaultRolePassword       string  `pulumi:"default_role_password,secret"`
+	DefaultDatabaseName       *string `pulumi:"default_database_name,optional"`
+	ConnectionURI             string  `pulumi:"connection_uri,secret"`
+	ConnectionURIPooler       string  `pulumi:"connection_uri_pooler,secret"`
 	DefaultEndpointHost       string  `pulumi:"default_endpoint_host"`
 	DefaultEndpointHostPooler string  `pulumi:"default_endpoint_host_pooler"`
 }
 
-func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, preview bool) (
+func (pr *ProjectState) Annotate(a infer.Annotator) {
+	a.Describe(&pr.ID, "Project ID.")
+	a.Describe(&pr.Name, "Neon project name.")
+	a.Describe(&pr.OrgID, "Neon Org ID.")
+	a.Describe(&pr.DefaultBranchName, "Neon default branch's name.")
+	a.Describe(&pr.DefaultDatabaseName, "Neon default database's name.")
+	a.Describe(&pr.DefaultRoleName, "Neon default role's name.")
+	a.Describe(&pr.DefaultRolePassword, "Neon default role's password.")
+	a.Describe(&pr.ConnectionURI, "URI to connect to the default database using the default endpoint.")
+	a.Describe(&pr.ConnectionURIPooler,
+		"URI to connect to the default database using the default endpoint in the pooler mode.")
+	a.Describe(&pr.DefaultEndpointHost, "The default endpoint's host.")
+	a.Describe(&pr.DefaultEndpointHostPooler, "The default endpoint's host with the pooler mode active.")
+}
+
+func (pr Project) Create(ctx context.Context, _ string, inputs ProjectArgs, preview bool) (
 	id string, output ProjectState, err error) {
 	c, err := NewSDKClient(ctx)
 
@@ -52,11 +76,6 @@ func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, previ
 		var resp sdk.CreatedProject
 		resp, err = c.CreateProject(sdk.ProjectCreateRequest{
 			Project: sdk.ProjectCreateRequestProject{
-				Branch: &sdk.ProjectCreateRequestProjectBranch{
-					DatabaseName: inputs.DefaultDatabaseName,
-					Name:         inputs.DefaultBranchName,
-					RoleName:     inputs.DefaultRoleName,
-				},
 				Name:  inputs.Name,
 				OrgID: inputs.OrgID,
 			},
@@ -82,12 +101,17 @@ func (p Project) Create(ctx context.Context, _ string, inputs ProjectArgs, previ
 			}
 		}
 
-		output.DefaultRolePassword = pass
+		if pass != nil {
+			output.DefaultRolePassword = *pass
+		}
 		host := resp.EndpointsResponse.Endpoints[0].Host
 		output.DefaultEndpointHost = host
 		output.DefaultEndpointHostPooler = newHostPooler(host)
 		output.ConnectionURI = resp.ConnectionURIs[0].ConnectionURI
 		output.ConnectionURIPooler = newURIPooler(output.ConnectionURI)
+
+		// preserve the inputs
+		output.inputState = inputs
 	}
 
 	return id, output, err
@@ -105,11 +129,14 @@ func newURIPooler(uri string) string {
 	return fmt.Sprintf("%s@%s/%s", els[0], newHostPooler(suffParts[0]), suffParts[1])
 }
 
-func (p Project) Update(ctx context.Context, id string, olds ProjectState, news ProjectArgs, preview bool) (
+func (pr Project) Update(ctx context.Context, id string, olds ProjectState, news ProjectArgs, preview bool) (
 	output ProjectState, err error) {
 	c, err := NewSDKClient(ctx)
+	if err != nil {
+		return output, err
+	}
 
-	if err == nil && !preview && isProjectStateUpdated(olds, news) {
+	if !preview {
 		var resp sdk.UpdateProjectRespObj
 		resp, err = c.UpdateProject(id, sdk.ProjectUpdateRequest{
 			Project: sdk.ProjectUpdateRequestProject{
@@ -121,17 +148,15 @@ func (p Project) Update(ctx context.Context, id string, olds ProjectState, news 
 		if err == nil {
 			output.Name = &resp.ProjectResponse.Project.Name
 		}
+
+	} else {
+		_, _, output, err = pr.Read(ctx, id, news, olds)
 	}
 
 	return output, err
 }
 
-func isProjectStateUpdated(olds ProjectState, news ProjectArgs) bool {
-	// TODO: extend
-	return olds.Name != news.Name
-}
-
-func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) (
+func (pr Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) (
 	canonicalID string, normalizedInputs ProjectArgs, normalizedState ProjectState, err error) {
 	c, err := NewSDKClient(ctx)
 	if err == nil {
@@ -149,13 +174,12 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 			}
 
 			var defaultBranchID string
-
 			for _, br := range respBranches.BranchesResponse.Branches {
 				if br.Default {
-					normalizedInputs.DefaultBranchName = &br.Name
+					normalizedState.DefaultBranchName = &br.Name
 					defaultBranchID = br.ID
+					break
 				}
-				break
 			}
 
 			var respDB sdk.DatabasesResponse
@@ -170,8 +194,8 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 
 			// the earliest created database is assumed default
 			earliestCreatedDatabase := respDB.Databases[0]
-			normalizedInputs.DefaultDatabaseName = &earliestCreatedDatabase.Name
-			normalizedInputs.DefaultRoleName = &earliestCreatedDatabase.OwnerName
+			normalizedState.DefaultDatabaseName = &earliestCreatedDatabase.Name
+			normalizedState.DefaultRoleName = &earliestCreatedDatabase.OwnerName
 
 			normalizedState = ProjectState{
 				ProjectArgs: normalizedInputs,
@@ -184,7 +208,7 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 				return "", ProjectArgs{}, ProjectState{}, err
 			}
 
-			normalizedState.DefaultRolePassword = &respPass.Password
+			normalizedState.DefaultRolePassword = respPass.Password
 
 			var respEndpoints sdk.EndpointsResponse
 			respEndpoints, err = c.ListProjectBranchEndpoints(canonicalID, defaultBranchID)
@@ -214,10 +238,31 @@ func (p Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectSt
 	return canonicalID, normalizedInputs, normalizedState, err
 }
 
-func (p Project) Delete(ctx context.Context, id string, _ ProjectState) error {
+func (pr Project) Delete(ctx context.Context, id string, _ ProjectState) error {
 	c, err := NewSDKClient(ctx)
 	if err == nil {
 		_, err = c.DeleteProject(id)
 	}
 	return err
+}
+
+func (pr Project) Diff(_ context.Context, _ string, olds ProjectState, news ProjectArgs) (diff p.DiffResponse,
+	err error) {
+	var (
+		isDiff    bool
+		isDestroy bool
+	)
+
+	spew.Dump("olds", olds)
+	spew.Dump("news", news)
+
+	isDiff = olds.Name != news.Name
+	isDiff = isDiff || isDestroy
+
+	diff = p.DiffResponse{
+		DeleteBeforeReplace: isDestroy,
+		HasChanges:          isDiff,
+	}
+
+	return diff, err
 }

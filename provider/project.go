@@ -18,10 +18,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"maps"
+	"reflect"
 	"slices"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	sdk "github.com/kislerdm/neon-sdk-go"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -42,15 +43,15 @@ func (pr *ProjectArgs) Annotate(a infer.Annotator) {
 type ProjectState struct {
 	ProjectArgs
 	inputState                ProjectArgs
-	ID                        string  `pulumi:"identifier"`
-	DefaultBranchName         *string `pulumi:"default_branch_name,optional"`
-	DefaultRoleName           *string `pulumi:"default_role_name,optional"`
-	DefaultRolePassword       string  `pulumi:"default_role_password,secret"`
-	DefaultDatabaseName       *string `pulumi:"default_database_name,optional"`
-	ConnectionURI             string  `pulumi:"connection_uri,secret"`
-	ConnectionURIPooler       string  `pulumi:"connection_uri_pooler,secret"`
-	DefaultEndpointHost       string  `pulumi:"default_endpoint_host"`
-	DefaultEndpointHostPooler string  `pulumi:"default_endpoint_host_pooler"`
+	ID                        string `pulumi:"identifier"`
+	DefaultBranchName         string `pulumi:"default_branch_name"`
+	DefaultRoleName           string `pulumi:"default_role_name"`
+	DefaultRolePassword       string `pulumi:"default_role_password"`
+	DefaultDatabaseName       string `pulumi:"default_database_name"`
+	ConnectionURI             string `pulumi:"connection_uri"`
+	ConnectionURIPooler       string `pulumi:"connection_uri_pooler"`
+	DefaultEndpointHost       string `pulumi:"default_endpoint_host"`
+	DefaultEndpointHostPooler string `pulumi:"default_endpoint_host_pooler"`
 }
 
 func (pr *ProjectState) Annotate(a infer.Annotator) {
@@ -89,21 +90,19 @@ func (pr Project) Create(ctx context.Context, _ string, inputs ProjectArgs, prev
 		output.ID = resp.ProjectResponse.Project.ID
 		output.OrgID = resp.ProjectResponse.Project.OrgID
 		output.Name = &resp.ProjectResponse.Project.Name
-		output.DefaultDatabaseName = &resp.DatabasesResponse.Databases[0].Name
-		output.DefaultRoleName = &resp.DatabasesResponse.Databases[0].OwnerName
-		output.DefaultBranchName = &resp.BranchResponse.Branch.Name
+		output.DefaultDatabaseName = resp.DatabasesResponse.Databases[0].Name
+		output.DefaultRoleName = resp.DatabasesResponse.Databases[0].OwnerName
+		output.DefaultBranchName = resp.BranchResponse.Branch.Name
 
-		var pass *string
 		for _, role := range resp.RolesResponse.Roles {
-			if output.DefaultRoleName != nil && role.Name == *output.DefaultRoleName {
-				pass = role.Password
+			if role.Name == output.DefaultRoleName {
+				if role.Password != nil {
+					output.DefaultRolePassword = *role.Password
+				}
 				break
 			}
 		}
 
-		if pass != nil {
-			output.DefaultRolePassword = *pass
-		}
 		host := resp.EndpointsResponse.Endpoints[0].Host
 		output.DefaultEndpointHost = host
 		output.DefaultEndpointHostPooler = newHostPooler(host)
@@ -131,6 +130,7 @@ func newURIPooler(uri string) string {
 
 func (pr Project) Update(ctx context.Context, id string, olds ProjectState, news ProjectArgs, preview bool) (
 	output ProjectState, err error) {
+
 	c, err := NewSDKClient(ctx)
 	if err != nil {
 		return output, err
@@ -158,6 +158,7 @@ func (pr Project) Update(ctx context.Context, id string, olds ProjectState, news
 
 func (pr Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectState) (
 	canonicalID string, normalizedInputs ProjectArgs, normalizedState ProjectState, err error) {
+
 	c, err := NewSDKClient(ctx)
 	if err == nil {
 		var resp sdk.ProjectResponse
@@ -173,10 +174,15 @@ func (pr Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectS
 				return canonicalID, normalizedInputs, normalizedState, err
 			}
 
+			normalizedState = ProjectState{
+				ProjectArgs: normalizedInputs,
+				ID:          canonicalID,
+			}
+
 			var defaultBranchID string
 			for _, br := range respBranches.BranchesResponse.Branches {
 				if br.Default {
-					normalizedState.DefaultBranchName = &br.Name
+					normalizedState.DefaultBranchName = br.Name
 					defaultBranchID = br.ID
 					break
 				}
@@ -194,13 +200,8 @@ func (pr Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectS
 
 			// the earliest created database is assumed default
 			earliestCreatedDatabase := respDB.Databases[0]
-			normalizedState.DefaultDatabaseName = &earliestCreatedDatabase.Name
-			normalizedState.DefaultRoleName = &earliestCreatedDatabase.OwnerName
-
-			normalizedState = ProjectState{
-				ProjectArgs: normalizedInputs,
-				ID:          canonicalID,
-			}
+			normalizedState.DefaultDatabaseName = earliestCreatedDatabase.Name
+			normalizedState.DefaultRoleName = earliestCreatedDatabase.OwnerName
 
 			var respPass sdk.RolePasswordResponse
 			respPass, err = c.GetProjectBranchRolePassword(canonicalID, defaultBranchID, earliestCreatedDatabase.OwnerName)
@@ -225,8 +226,9 @@ func (pr Project) Read(ctx context.Context, id string, _ ProjectArgs, _ ProjectS
 			normalizedState.DefaultEndpointHostPooler = newHostPooler(earliestCreatedEndpoint.Host)
 
 			var respURI sdk.ConnectionURIResponse
+			pooled := false
 			respURI, err = c.GetConnectionURI(canonicalID, &defaultBranchID, &earliestCreatedEndpoint.ID,
-				earliestCreatedDatabase.Name, earliestCreatedDatabase.OwnerName, nil)
+				earliestCreatedDatabase.Name, earliestCreatedDatabase.OwnerName, &pooled)
 			if err != nil {
 				return "", ProjectArgs{}, ProjectState{}, err
 			}
@@ -246,23 +248,129 @@ func (pr Project) Delete(ctx context.Context, id string, _ ProjectState) error {
 	return err
 }
 
-func (pr Project) Diff(_ context.Context, _ string, olds ProjectState, news ProjectArgs) (diff p.DiffResponse,
+func (pr Project) Diff(ctx context.Context, id string, olds ProjectState, news ProjectArgs) (diff p.DiffResponse,
 	err error) {
-	var (
-		isDiff    bool
-		isDestroy bool
-	)
 
-	spew.Dump("olds", olds)
-	spew.Dump("news", news)
-
-	isDiff = olds.Name != news.Name
-	isDiff = isDiff || isDestroy
-
-	diff = p.DiffResponse{
-		DeleteBeforeReplace: isDestroy,
-		HasChanges:          isDiff,
+	_, _, stateCloud, err := pr.Read(ctx, id, news, olds)
+	if err != nil {
+		return diff, fmt.Errorf("could not read the current real state: %w", err)
 	}
 
-	return diff, err
+	// define the deviation of the SaaS state from the pulumi state
+	drift := projectDrift(stateCloud, olds)
+
+	// define the change between the old and the new inputs
+	inputChange := projectInputChange(olds, news)
+
+	o := p.DiffResponse{
+		DeleteBeforeReplace: drift.DeleteBeforeReplace || inputChange.DeleteBeforeReplace,
+		HasChanges:          drift.HasChanges || inputChange.HasChanges,
+		DetailedDiff:        drift.DetailedDiff,
+	}
+	maps.Copy(o.DetailedDiff, inputChange.DetailedDiff)
+
+	return o, err
+}
+
+func projectInputChange(olds ProjectState, news ProjectArgs) p.DiffResponse {
+	var o = p.DiffResponse{
+		DeleteBeforeReplace: false,
+		HasChanges:          false,
+		DetailedDiff:        make(map[string]p.PropertyDiff),
+	}
+
+	// the project's name should be changed if the new input differs from the old pulumi input
+	var changedName = news.Name != nil && !reflect.DeepEqual(news.Name, olds.inputState.Name)
+
+	// the cloud state will not be changed if the name was removed from the manifest, or set to the empty string
+	if news.Name == nil || (news.Name != nil && *news.Name == "") {
+		changedName = false
+	}
+
+	if changedName {
+		o.HasChanges = true
+		o.DetailedDiff["name"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: true,
+		}
+	}
+
+	// the project should be moved to the org id the new input differs from the old pulumi input
+	var changedOrgID = !reflect.DeepEqual(news.OrgID, olds.inputState.OrgID)
+	if changedOrgID {
+		o.HasChanges = true
+		o.DetailedDiff["org_id"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: true,
+		}
+	}
+
+	return o
+}
+
+func projectDrift(read ProjectState, pulumi ProjectState) p.DiffResponse {
+
+	var o = p.DiffResponse{
+		DeleteBeforeReplace: false,
+		HasChanges:          false,
+		DetailedDiff:        make(map[string]p.PropertyDiff),
+	}
+
+	if !reflect.DeepEqual(read.Name, pulumi.Name) {
+		o.HasChanges = true
+		o.DetailedDiff["name"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	if !reflect.DeepEqual(read.OrgID, pulumi.OrgID) {
+		o.HasChanges = true
+		o.DetailedDiff["org_id"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	if read.DefaultBranchName != pulumi.DefaultBranchName {
+		o.HasChanges = true
+		o.DetailedDiff["default_branch_name"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	if read.DefaultRoleName != pulumi.DefaultRoleName {
+		o.HasChanges = true
+		o.DetailedDiff["default_role_name"] = p.PropertyDiff{
+			Kind:      p.DeleteReplace,
+			InputDiff: false,
+		}
+	}
+
+	if read.DefaultDatabaseName != pulumi.DefaultDatabaseName {
+		o.HasChanges = true
+		o.DetailedDiff["default_database_name"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	if read.ConnectionURI != pulumi.ConnectionURI {
+		o.HasChanges = true
+		o.DetailedDiff["connection_uri"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	if read.ConnectionURIPooler != pulumi.ConnectionURIPooler {
+		o.HasChanges = true
+		o.DetailedDiff["connection_uri_pooler"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	return o
 }

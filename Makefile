@@ -14,8 +14,7 @@ VERSION_PATH    := ${PROVIDER_PATH}.Version
 GOPATH			:= $(shell go env GOPATH)
 
 WORKING_DIR     := $(shell pwd)
-EXAMPLES_DIR    := ${WORKING_DIR}/examples/yaml
-TESTPARALLELISM := 4
+TESTPARALLELISM := 1
 
 OS    := $(shell uname)
 SHELL := /bin/bash
@@ -24,15 +23,8 @@ SHELL := /bin/bash
 help: ## Prints help message.
 	@ grep -h -E '^[a-zA-Z0-9_-].+::.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1m%-30s\033[0m %s\n", $$1, $$2}'
 
-ensure::
-	cd provider && go mod tidy
-	cd sdk && go mod tidy
-
 provider:: ## Builds provider.
-	(cd provider && go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/${VERSION_PATH}=${VERSION}" $(PROJECT)/${PROVIDER_PATH}/cmd/$(PROVIDER))
-
-provider_debug:: ## Builds provider with debug gcflags flag set.
-	(cd provider && go build -o $(WORKING_DIR)/bin/${PROVIDER} -gcflags="all=-N -l" -ldflags "-X ${PROJECT}/${VERSION_PATH}=${VERSION}" $(PROJECT)/${PROVIDER_PATH}/cmd/$(PROVIDER))
+	cd provider && go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/${VERSION_PATH}=${VERSION}" $(PROJECT)/${PROVIDER_PATH}/cmd/$(PROVIDER)
 
 test_provider:: ## Tests provider
 	cd provider && go test -short -v -count=1 -cover -timeout 2h -parallel ${TESTPARALLELISM} ./...
@@ -73,82 +65,13 @@ python_sdk:: ## Generates python SDK.
 		cd ./bin && python3 setup.py build sdist
 
 gen_schema:: ## Generates schema.json.
-	pulumi package get-schema bin/$(PROVIDER) > sdk/schema.json
+	pulumi package get-schema bin/$(PROVIDER) > schema.json
 
-gen_examples: gen_go_example \
-		gen_nodejs_example \
-		gen_python_example \
-		gen_dotnet_example
-
-gen_%_example:
-	rm -rf ${WORKING_DIR}/examples/$*
-	pulumi convert \
-		--cwd ${WORKING_DIR}/examples/yaml \
-		--logtostderr \
-		--generate-only \
-		--non-interactive \
-		--language $* \
-		--out ${WORKING_DIR}/examples/$*
-
-define pulumi_login
-    export PULUMI_CONFIG_PASSPHRASE=asdfqwerty1234; \
-    pulumi login --local;
-endef
-
-up::
-	$(call pulumi_login) \
-	cd ${EXAMPLES_DIR} && \
-	pulumi stack init dev && \
-	pulumi stack select dev && \
-	pulumi config set name dev && \
-	pulumi up -y
-
-down::
-	$(call pulumi_login) \
-	cd ${EXAMPLES_DIR} && \
-	pulumi stack select dev && \
-	pulumi destroy -y && \
-	pulumi stack rm dev -y
-
-devcontainer::
-	git submodule update --init --recursive .devcontainer
-	git submodule update --remote --merge .devcontainer
-	cp -f .devcontainer/devcontainer.json .devcontainer.json
-
-.PHONY: build
-
-build:: provider dotnet_sdk go_sdk nodejs_sdk python_sdk ## Builds provider and SDK for all supported languages.
-
-# Required for the codegen action that runs in pulumi/pulumi
-only_build:: build
+build-full:: provider gen_schema go_sdk nodejs_sdk python_sdk ## Builds provider and SDK for all supported languages.
 
 lint:: ## Lints the provider's codebase.
-	for DIR in "provider" "sdk" "tests" ; do \
+	for DIR in "provider" "sdk"; do \
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 
-install:: install_nodejs_sdk install_dotnet_sdk
-	cp $(WORKING_DIR)/bin/${PROVIDER} ${GOPATH}/bin
-
-GO_TEST 	 := go test -v -count=1 -cover -timeout 2h -parallel ${TESTPARALLELISM}
-
-test_all:: test_provider ## Tests SDKs.
-	cd tests/sdk/nodejs && $(GO_TEST) ./...
-	cd tests/sdk/python && $(GO_TEST) ./...
-	cd tests/sdk/dotnet && $(GO_TEST) ./...
-	cd tests/sdk/go && $(GO_TEST) ./...
-
-install_dotnet_sdk:: ## Installs .Net SDK.
-	rm -rf $(WORKING_DIR)/nuget/$(NUGET_PKG_NAME).*.nupkg
-	mkdir -p $(WORKING_DIR)/nuget
-	find . -name '*.nupkg' -print -exec cp -p {} ${WORKING_DIR}/nuget \;
-
-install_python_sdk::
-	#target intentionally blank
-
-install_go_sdk::
-	#target intentionally blank
-
-install_nodejs_sdk:: ## Installs Node.js SDK.
-	-yarn unlink --cwd $(WORKING_DIR)/sdk/nodejs/bin
-	yarn link --cwd $(WORKING_DIR)/sdk/nodejs/bin
+local:: provider gen_schema go_sdk ## Builds provider for local tests

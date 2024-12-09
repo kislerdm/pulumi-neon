@@ -29,9 +29,11 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 
 ## How to provision a Neon Project
 
+**Prerequisite:** the [configuration steps](#how-to-configure-the-provider) above are completed.
+
 ### Go
 
-1. Add the SDK:
+1. Add the SDK as dependency:
 
 ```shell
 go get "github.com/kislerdm/pulumi-neon/sdk"
@@ -67,7 +69,7 @@ func main() {
 
 ### Typescript
 
-1. Add the SDK:
+1. Add the SDK as dependency:
 
 ```shell
 npm install "@pulumi/neon"
@@ -86,13 +88,19 @@ new Project("myproject", {name: "myproject"} as ProjectArgs);
 
 ### Python
 
-1. Add the SDK:
+1. Active venv:
+
+```shell
+source venv/bin/activate
+```
+
+2. Add the SDK as dependency:
 
 ```shell
 pip install pulumi_neon
 ```
 
-2. Edit the file `__main__.py`:
+3. Edit the file `__main__.py`:
 
 ```python
 from pulumi_neon.provider.project import Project, ProjectArgs
@@ -100,5 +108,5 @@ from pulumi_neon.provider.project import Project, ProjectArgs
 Project("myproject", ProjectArgs(name="myproject"))
 ```
 
-3. Run `pulumi up -f`
-4. Examine the Neon console: it's expected to see a new project there.
+4. Run `pulumi up -f`
+5. Examine the Neon console: it's expected to see a new project there.

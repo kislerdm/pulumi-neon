@@ -17,6 +17,25 @@
   "meta": {
     "moduleFormat": "(.*)"
   },
+  "language": {
+    "go": {
+      "generateResourceContainerTypes": true,
+      "pulumiSDKVersion": 3,
+      "respectSchemaVersion": true
+    },
+    "nodejs": {
+      "readme": "Pulumi Neon Provider: NodeJS SDK",
+      "respectSchemaVersion": true
+    },
+    "python": {
+      "requires": {
+        "pulumi": "\u003e=3.0.0,\u003c4.0.0"
+      },
+      "readme": "Pulumi Neon Provider: Python SDK",
+      "respectSchemaVersion": true,
+      "pyproject": {}
+    }
+  },
   "config": {
     "variables": {
       "api_key": {

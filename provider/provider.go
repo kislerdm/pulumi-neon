@@ -24,6 +24,9 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi-go-provider/middleware/schema"
+	goGen "github.com/pulumi/pulumi/pkg/v3/codegen/go"
+	nodejsGen "github.com/pulumi/pulumi/pkg/v3/codegen/nodejs"
+	pythonGen "github.com/pulumi/pulumi/pkg/v3/codegen/python"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 )
 
@@ -38,13 +41,31 @@ func Provider() p.Provider {
 		Metadata: schema.Metadata{
 			Description:       "Pulumi Neon Provider",
 			DisplayName:       "Neon Provider",
-			Keywords:          []string{"pulumi", "neon", "category/database"},
+			Keywords:          []string{"pulumi", Name, "category/database"},
 			Homepage:          "https://github.com/kislerdm/pulumi-neon",
 			Repository:        "https://github.com/kislerdm/pulumi-neon",
 			Publisher:         "Dmitry Kisler",
 			PluginDownloadURL: "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}",
 			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
 			License:           "Apache-2.0",
+			LanguageMap: map[string]any{
+				"go": goGen.GoPackageInfo{
+					GenerateResourceContainerTypes: true,
+					RespectSchemaVersion:           true,
+					PulumiSDKVersion:               3,
+				},
+				"nodejs": nodejsGen.NodePackageInfo{
+					RespectSchemaVersion: true,
+					Readme:               "Pulumi Neon Provider: NodeJS SDK",
+				},
+				"python": pythonGen.PackageInfo{
+					RespectSchemaVersion: true,
+					Requires: map[string]string{
+						"pulumi": ">=3.0.0,<4.0.0",
+					},
+					Readme: "Pulumi Neon Provider: Python SDK",
+				},
+			},
 		},
 		Resources: []infer.InferredResource{
 			infer.Resource[Project, ProjectArgs, ProjectState](),

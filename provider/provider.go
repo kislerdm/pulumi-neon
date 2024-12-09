@@ -37,11 +37,11 @@ func Provider() p.Provider {
 	o := infer.Provider(infer.Options{
 		Metadata: schema.Metadata{
 			Description:       "Pulumi Neon Provider",
-			DisplayName:       Name,
-			Keywords:          []string{"pulumi", Name, "category/cloud"},
+			DisplayName:       "Neon Provider",
+			Keywords:          []string{"pulumi", "neon", "category/database"},
 			Homepage:          "https://github.com/kislerdm/pulumi-neon",
 			Repository:        "https://github.com/kislerdm/pulumi-neon",
-			Publisher:         "kislerdm",
+			Publisher:         "Dmitry Kisler",
 			PluginDownloadURL: "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}",
 			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
 			License:           "Apache-2.0",

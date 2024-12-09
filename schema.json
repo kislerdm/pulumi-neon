@@ -1,19 +1,19 @@
 {
   "name": "neon",
-  "displayName": "neon",
+  "displayName": "Neon Provider",
   "version": "0.0.1",
   "description": "Pulumi Neon Provider",
   "keywords": [
     "pulumi",
     "neon",
-    "category/cloud"
+    "category/database"
   ],
   "homepage": "https://github.com/kislerdm/pulumi-neon",
   "license": "Apache-2.0",
   "repository": "https://github.com/kislerdm/pulumi-neon",
   "logoUrl": "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
   "pluginDownloadURL": "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}",
-  "publisher": "kislerdm",
+  "publisher": "Dmitry Kisler",
   "meta": {
     "moduleFormat": "(.*)"
   },

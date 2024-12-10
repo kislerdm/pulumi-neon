@@ -31,11 +31,13 @@ jobs:
           go-version-file: 'provider/go.mod'
           cache: true
       - run: cd provider && go mod download
+        name: Install dependencies
       - name: Run linters
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           working-directory: provider
+          args: "--timeout 10m"
 
   generate:
     name: Generate artefacts

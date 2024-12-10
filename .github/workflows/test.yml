@@ -55,6 +55,10 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
+      - run: |
+          brew tap pulumi/tap
+          brew install pulumictl
+        name: Install pulumictl
       - run: make test_provider
         name: Run Tests
         env:

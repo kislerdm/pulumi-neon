@@ -14,6 +14,7 @@ on:
       - 'schema.json'
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read

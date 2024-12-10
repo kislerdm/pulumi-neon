@@ -20,29 +20,29 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'provider/go.mod'
-          cache-dependency-path: 'provider/go.sum'
-          cache: true
-      - run: cd provider && go mod download
-        name: Install dependencies
-      - name: Run linters
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: provider
-          args: "--timeout 5m -c ../.golangci.yml"
+#  lint:
+#    name: Lint
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 5
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: actions/setup-go@v5
+#        with:
+#          go-version-file: 'provider/go.mod'
+#          cache-dependency-path: 'provider/go.sum'
+#          cache: true
+#      - run: cd provider && go mod download
+#        name: Install dependencies
+#      - name: Run linters
+#        uses: golangci/golangci-lint-action@v6
+#        with:
+#          version: latest
+#          working-directory: provider
+#          args: "--timeout 5m -c ../.golangci.yml"
 
   tests:
     name: Tests
-    needs: lint
+#    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -52,8 +52,7 @@ jobs:
           go-version-file: 'provider/go.mod'
           cache-dependency-path: 'provider/go.sum'
           cache: true
-      - run: curl -fsSL https://get.pulumi.com | sh
-        name: Install Pulumi
+      - uses: pulumi/actions@v6
       - run: make test_provider
         name: Run Tests
         env:

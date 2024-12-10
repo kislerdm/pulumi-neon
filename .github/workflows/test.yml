@@ -67,4 +67,4 @@ jobs:
         env:
           ACC_TEST: 1
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          ORG_ID: ${{ secrets.ORG_ID }}
+          ORG_ID: ${{ vars.ORG_ID }}

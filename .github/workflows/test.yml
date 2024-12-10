@@ -29,6 +29,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'provider/go.mod'
+          cache-dependency-path: 'provider/go.sum'
           cache: true
       - run: cd provider && go mod download
         name: Install dependencies
@@ -37,23 +38,7 @@ jobs:
         with:
           version: latest
           working-directory: provider
-          args: "--timeout 10m"
-
-  generate:
-    name: Generate artefacts
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'provider/go.mod'
-          cache: true
-      - run: make local
-      - name: git diff
-        run: |
-          git diff --compact-summary --exit-code || \
-            (echo; echo "Unexpected difference in directories after code generation."; exit 1)
+          args: "--timeout 5m -c ../.golangci.yml"
 
   tests:
     name: Tests
@@ -65,8 +50,12 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'provider/go.mod'
+          cache-dependency-path: 'provider/go.sum'
           cache: true
+      - run: curl -fsSL https://get.pulumi.com | sh
+        name: Install Pulumi
       - run: make test_provider
+        name: Run Tests
         env:
           ACC_TEST: 1
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}

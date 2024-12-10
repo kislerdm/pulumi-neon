@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"testing"
@@ -29,12 +28,11 @@ func init() {
 		panic(err)
 	}
 
-	err = exec.Command("cd", path.Join(cwd, ".."), "&&", "make", "go_sdk").Run()
-	if err != nil {
-		panic(err)
-	}
-
 	sdkPath = path.Join(cwd, "..", "sdk")
+	_, err = os.ReadDir(sdkPath)
+	if err != nil {
+		panic(fmt.Sprintf("SDK not found in %s: %v", sdkPath, err))
+	}
 }
 
 func verifyProjectOutputs(t *testing.T, stack integration.RuntimeValidationStackInfo, client *sdk.Client,

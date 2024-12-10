@@ -53,6 +53,8 @@ jobs:
           cache-dependency-path: 'provider/go.sum'
           cache: true
       - uses: pulumi/actions@v6
+        with:
+          pulumi-version: "3.142.0"
       - run: make test_provider
         name: Run Tests
         env:

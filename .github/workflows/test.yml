@@ -43,7 +43,7 @@ jobs:
   tests:
     name: Tests
 #    needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -56,6 +56,7 @@ jobs:
         with:
           pulumi-version: "3.142.0"
       - run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew tap pulumi/tap
           brew install pulumictl
         name: Install pulumictl

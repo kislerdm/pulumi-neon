@@ -7,7 +7,7 @@ NODE_MODULE_NAME := @neon
 NUGET_PKG_NAME   := neon
 
 PROVIDER        := pulumi-resource-${PACK}
-VERSION         ?= $(shell pulumictl get version)
+VERSION         ?= $(shell git rev-parse --short HEAD)
 PROVIDER_PATH   := provider
 VERSION_PATH    := ${PROVIDER_PATH}.Version
 
@@ -75,3 +75,5 @@ lint:: ## Lints the provider's codebase.
 	done
 
 local:: provider gen_schema go_sdk ## Builds provider for local tests
+
+build.release:: provider gen_schema go_sdk nodejs_sdk python_sdk ## Builds all dependencies for release.

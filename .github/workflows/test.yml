@@ -1,0 +1,70 @@
+name: Tests
+on:
+  pull_request:
+    paths:
+      - 'provider/**'
+      - 'sdk/go/**'
+      - 'sdk/go.*'
+      - 'schema.json'
+  push:
+    paths:
+      - 'provider/**'
+      - 'sdk/go/**'
+      - 'sdk/go.*'
+      - 'schema.json'
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'provider/go.mod'
+          cache: true
+      - run: cd provider && go mod download
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: provider
+
+  generate:
+    name: Generate artefacts
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'provider/go.mod'
+          cache: true
+      - run: make local
+      - name: git diff
+        run: |
+          git diff --compact-summary --exit-code || \
+            (echo; echo "Unexpected difference in directories after code generation."; exit 1)
+
+  tests:
+    name: Tests
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'provider/go.mod'
+          cache: true
+      - run: make test_provider
+        env:
+          ACC_TEST: 1
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          ORG_ID: ${{ secrets.ORG_ID }}

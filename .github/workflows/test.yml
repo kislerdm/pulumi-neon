@@ -60,6 +60,8 @@ jobs:
           brew tap pulumi/tap
           brew install pulumictl
         name: Install pulumictl
+      - run: make provider
+        name: Build local provider
       - run: make test_provider
         name: Run Tests
         env:

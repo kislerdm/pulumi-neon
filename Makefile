@@ -7,7 +7,7 @@ NODE_MODULE_NAME := @neon
 NUGET_PKG_NAME   := neon
 
 PROVIDER        := pulumi-resource-${PACK}
-VERSION         ?= $(shell git rev-parse --short HEAD)
+VERSION         ?= v0.0.1-alpha.$(shell git rev-parse --short HEAD)
 PROVIDER_PATH   := provider
 VERSION_PATH    := ${PROVIDER_PATH}.Version
 

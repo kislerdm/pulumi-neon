@@ -20,29 +20,46 @@ permissions:
   contents: read
 
 jobs:
-#  lint:
-#    name: Lint
-#    runs-on: ubuntu-latest
-#    timeout-minutes: 5
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-go@v5
-#        with:
-#          go-version-file: 'provider/go.mod'
-#          cache-dependency-path: 'provider/go.sum'
-#          cache: true
-#      - run: cd provider && go mod download
-#        name: Install dependencies
-#      - name: Run linters
-#        uses: golangci/golangci-lint-action@v6
-#        with:
-#          version: latest
-#          working-directory: provider
-#          args: "--timeout 5m -c ../.golangci.yml"
+  diff:
+    name: Detect drift of codebase
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'provider/go.mod'
+          cache-dependency-path: 'provider/go.sum'
+          cache: true
+      - run: make local
+        name: Build artefacts
+      - name: git diff
+        run: |
+          git diff --compact-summary --exit-code || \
+            (echo; echo "Unexpected difference in directories after build, run 'make ' command and commit."; exit 1)
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'provider/go.mod'
+          cache-dependency-path: 'provider/go.sum'
+          cache: true
+      - run: cd provider && go mod download
+        name: Install dependencies
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: provider
+          args: "--timeout 5m -c ../.golangci.yml"
 
   tests:
     name: Tests
-#    needs: lint
+    needs: diff
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

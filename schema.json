@@ -1,7 +1,7 @@
 {
   "name": "neon",
   "displayName": "Neon Provider",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha.bd703f3",
   "description": "Pulumi Neon Provider",
   "keywords": [
     "pulumi",

@@ -7,7 +7,7 @@ NODE_MODULE_NAME := @neon
 NUGET_PKG_NAME   := neon
 
 PROVIDER        := pulumi-resource-${PACK}
-VERSION         ?= v0.0.1-alpha.$(shell git rev-parse --short HEAD)
+VERSION         ?= 0.0.1+$(shell git rev-parse --short HEAD)
 PROVIDER_PATH   := provider
 VERSION_PATH    := ${PROVIDER_PATH}.Version
 
@@ -29,19 +29,17 @@ provider:: ## Builds provider.
 test_provider:: ## Tests provider
 	cd provider && go test -short -v -count=1 -cover -timeout 2h -parallel ${TESTPARALLELISM} ./...
 
-dotnet_sdk:: DOTNET_VERSION := $(shell pulumictl get version --language dotnet)
 dotnet_sdk:: ## Generates .Net SDK.
 	rm -rf sdk/dotnet
 	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language dotnet
 	cd ${PACKDIR}/dotnet/&& \
-		echo "${DOTNET_VERSION}" >version.txt && \
-		dotnet build /p:Version=${DOTNET_VERSION}
+		echo "${VERSION}" >version.txt && \
+		dotnet build /p:Version=${VERSION}
 
 go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates Go SDK.
 	rm -rf sdk/go
 	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language go
 
-nodejs_sdk:: VERSION := $(shell pulumictl get version --language javascript)
 nodejs_sdk:: ## Generates Node.js SDK.
 	rm -rf sdk/nodejs
 	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language nodejs
@@ -52,7 +50,6 @@ nodejs_sdk:: ## Generates Node.js SDK.
 		sed -i.bak 's/$${VERSION}/$(VERSION)/g' bin/package.json && \
 		rm ./bin/package.json.bak
 
-python_sdk:: PYPI_VERSION := $(shell pulumictl get version --language python)
 python_sdk:: ## Generates python SDK.
 	rm -rf sdk/python
 	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language python
@@ -60,7 +57,7 @@ python_sdk:: ## Generates python SDK.
 	cd ${PACKDIR}/python/ && \
 		python3 setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \
-		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(PYPI_VERSION)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION)"/g' ./bin/setup.py && \
+		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist
 
@@ -77,3 +74,7 @@ lint:: ## Lints the provider's codebase.
 local:: provider gen_schema go_sdk ## Builds provider for local tests
 
 build.release:: provider gen_schema go_sdk nodejs_sdk python_sdk ## Builds all dependencies for release.
+
+java_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates Go SDK.
+	rm -rf sdk/java
+	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language java

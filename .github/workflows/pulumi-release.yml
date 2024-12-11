@@ -1,0 +1,164 @@
+# from https://github.com/pulumi/publish-go-binary-action/blob/cb6eddc75b7d8df10f053a356d761aab0694af49/.github/workflows/build-binaries.yml
+name: Build binaries
+
+on:
+  workflow_call:
+    inputs:
+      binary-name:
+        required: true
+        type: string
+        description: Name of the binary to build.
+      packages:
+        required: true
+        type: string
+        description: Go packages to be built. Multiple packages can be specified, separated by spaces. E.g. github.com/org/repo/cmd/my-app
+      version:
+        required: true
+        type: string
+        description: Semantic version of the release. Must be valid semantic version 2.0 (without leading "v")
+      version-path:
+        required: true
+        type: string
+        description: Path to a version variable in the source code to set E.g. github.com/org/repo/pkg/version.Version
+      root-dir:
+        required: false
+        type: string
+        description: Root directory of the go module. Defaults to the root of the repository - github.workspace.
+      pre-build:
+        required: false
+        type: string
+        description: Optional bash command to run before the go build.
+      extra-package-files:
+        required: false
+        type: string
+        description: Additional files to include in the package. E.g. "README.md LICENSE"
+      runs-on:
+        default: ubuntu-latest-4-cores
+        required: false
+        type: string
+        description: GitHub runner to use for build job.
+      cgo-enabled:
+        default: "0"
+        required: false
+        type: string
+        description: Set to '1' to enable CGO. See https://pkg.go.dev/cmd/cgo for more information.
+      build-args:
+        required: false
+        type: string
+        description: Additional command line argument to pass to `go build`. E.g. -ldflags="-s -w"
+    outputs:
+      assets-prefix:
+        description: Prefix used for all uploaded assets.
+        value: ${{ inputs.binary-name }}_v${{ inputs.version }}
+      checksums-filename:
+        description: Filename of the checksums file and asset.
+        value: ${{ inputs.binary-name }}_v${{ inputs.version }}_checksums.txt
+      linux-amd64-filename:
+        description: Filename of the linux-amd64 package.
+        value: ${{ jobs.build.outputs.linux-amd64-filename }}
+      linux-arm64-filename:
+        description: Filename of the linux-arm64 package.
+        value: ${{ jobs.build.outputs.linux-arm64-filename }}
+      darwin-amd64-filename:
+        description: Filename of the darwin-amd64 package.
+        value: ${{ jobs.build.outputs.darwin-amd64-filename }}
+      darwin-arm64-filename:
+        description: Filename of the darwin-arm64 package.
+        value: ${{ jobs.build.outputs.darwin-arm64-filename }}
+      windows-amd64-filename:
+        description: Filename of the windows-amd64 package.
+        value: ${{ jobs.build.outputs.windows-amd64-filename }}
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runs-on }}
+    name: Package binaries
+    outputs:
+      linux-amd64-filename: ${{ steps.package.outputs.linux-amd64-filename }}
+      linux-amd64-shasum: ${{ steps.checksum.outputs.linux-amd64-shasum }}
+      linux-arm64-filename: ${{ steps.package.outputs.linux-arm64-filename }}
+      linux-arm64-shasum: ${{ steps.checksum.outputs.linux-arm64-shasum }}
+      darwin-amd64-filename: ${{ steps.package.outputs.darwin-amd64-filename }}
+      darwin-amd64-shasum: ${{ steps.checksum.outputs.darwin-amd64-shasum }}
+      darwin-arm64-filename: ${{ steps.package.outputs.darwin-arm64-filename }}
+      darwin-arm64-shasum: ${{ steps.checksum.outputs.darwin-arm64-shasum }}
+      windows-amd64-filename: ${{ steps.package.outputs.windows-amd64-filename }}
+      windows-amd64-shasum: ${{ steps.checksum.outputs.windows-amd64-shasum }}
+    strategy:
+      matrix:
+        target:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+    env:
+      BINARY_SUFFIX: ${{ matrix.target.goos == 'windows' && '.exe' || '' }}
+      TARGET: ${{ matrix.target.goos }}-${{ matrix.target.goarch }}
+      GZ_FILENAME: ${{ inputs.binary-name }}_v${{ inputs.version }}-${{ matrix.target.goos }}-${{ matrix.target.goarch }}.tar.gz
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Pre-build
+        if: inputs.pre-build
+        run: ${{ inputs.pre-build }}
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+          CGO_ENABLED: ${{ inputs.cgo-enabled }}
+        working-directory: ${{ inputs.root-dir || github.workspace }}
+        run: go build -o "${{ runner.temp }}/${{ env.TARGET }}/${{ inputs.binary-name }}${{ env.BINARY_SUFFIX }}" -ldflags "-X ${{ inputs.version-path }}=${{ inputs.version }}" ${{ inputs.build-args }} ${{ inputs.packages }}
+
+      - name: Package
+        id: package
+        run: |
+          tar --gzip -cf "${{ runner.temp }}/${{ env.GZ_FILENAME }}" ${{ inputs.extra-package-files }} -C "${{ runner.temp }}/${{ env.TARGET }}" .
+          echo "${{ env.TARGET }}-filename="${{ env.GZ_FILENAME }}"" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.GZ_FILENAME }}
+          path: ${{ runner.temp }}/${{ env.GZ_FILENAME }}
+
+      - name: Checksum
+        id: checksum
+        working-directory: ${{ runner.temp }}
+        run: |
+          shasum "${{ env.GZ_FILENAME }}"
+          echo -n "${{ env.TARGET }}-shasum=" >> "$GITHUB_OUTPUT" && \
+            shasum "${{ env.GZ_FILENAME }}" >> "$GITHUB_OUTPUT"
+
+  checksum:
+    runs-on: ubuntu-latest
+    name: Write checksums
+    needs: build
+    env:
+      CHECKSUMS_FILENAME: "${{ inputs.binary-name }}_v${{ inputs.version }}_checksums.txt"
+    steps:
+      - name: Write checksums
+        run: |
+          echo "${{ needs.build.outputs.linux-amd64-shasum }}" >> "${{ env.CHECKSUMS_FILENAME }}"
+          echo "${{ needs.build.outputs.linux-arm64-shasum }}" >> "${{ env.CHECKSUMS_FILENAME }}"
+          echo "${{ needs.build.outputs.darwin-amd64-shasum }}" >> "${{ env.CHECKSUMS_FILENAME }}"
+          echo "${{ needs.build.outputs.darwin-arm64-shasum }}" >> "${{ env.CHECKSUMS_FILENAME }}"
+          echo "${{ needs.build.outputs.windows-amd64-shasum }}" >> "${{ env.CHECKSUMS_FILENAME }}"
+
+      - name: Upload checksums file
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CHECKSUMS_FILENAME }}
+          path: ${{ env.CHECKSUMS_FILENAME }}
+
+      - name: Output checksums filename
+        run: echo "checksums-filename=${{ env.CHECKSUMS_FILENAME }}" > "$GITHUB_OUTPUT"

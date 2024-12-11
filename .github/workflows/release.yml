@@ -18,7 +18,7 @@ jobs:
 
   release:
       name: Build and release
-      uses: pulumi/publish-go-binary-action/.github/workflows/build-binaries.yml@v1
+      uses: ./.github/workflows/pulumi-release.yml
       needs: version
       with:
         binary-name: pulumi-resource-neon

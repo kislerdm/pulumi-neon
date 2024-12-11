@@ -22,7 +22,7 @@ builds:
     ignore:
       - goos: darwin
         goarch: '386'
-    main: ./provider/cmd/pulumi-resource-neon
+    main: ./cmd/pulumi-resource-neon
     binary: 'pulumi-resource-neon'
 archives:
   - format: tar.gz

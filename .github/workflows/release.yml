@@ -7,27 +7,26 @@ permissions:
   contents: write
 
 jobs:
-  release-provider:
+  version:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'provider/go.mod'
-          cache-dependency-path: 'provider/go.sum'
-          cache: true
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        id: import_gpg
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
-      - name: Release provider
-        uses: goreleaser/goreleaser-action@v6.1.0
-        with:
-          version: '~> v2'
-          workdir: 'provider'
-          args: release --clean
-        env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Define the version
+        id: version
+        uses: pulumi/provider-version-action@v1
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+  release:
+      name: Build and release
+      uses: pulumi/publish-go-binary-action/.github/workflows/build-binaries.yml@v1
+      needs: version
+      with:
+        binary-name: pulumi-resource-neon
+        packages: github.com/kislerdm/pulumi-neon/provider/cmd/pulumi-resource-neon
+        version: ${{ needs.version.outputs.version }}
+        version-path: github.com/kislerdm/pulumi-neon/provider.Version
+        root-dir: provider
+        build-args: '-ldflags="-s -w"'
+        extra-package-files: LICENSE
+        cgo-enabled: '0'
+        runs-on: ubuntu-24.04

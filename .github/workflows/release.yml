@@ -25,8 +25,9 @@ jobs:
       - name: Release provider
         uses: goreleaser/goreleaser-action@v6.1.0
         with:
-          args: release --clean
+          version: '~> v2'
           workdir: 'provider'
+          args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -9,8 +9,6 @@ builds:
   - env:
       - CGO_ENABLED=0
     mod_timestamp: '{{ .CommitTimestamp }}'
-    flags:
-      - -trimpath
     ldflags:
       - '-s -w -X github.com/kislerdm/pulumi-neon/provider.Version={{.Version}}'
     goos:

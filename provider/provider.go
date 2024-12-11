@@ -24,6 +24,7 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi-go-provider/middleware/schema"
+	csharpGen "github.com/pulumi/pulumi/pkg/v3/codegen/dotnet"
 	goGen "github.com/pulumi/pulumi/pkg/v3/codegen/go"
 	nodejsGen "github.com/pulumi/pulumi/pkg/v3/codegen/nodejs"
 	pythonGen "github.com/pulumi/pulumi/pkg/v3/codegen/python"
@@ -64,6 +65,12 @@ func Provider() p.Provider {
 						"pulumi": ">=3.0.0,<4.0.0",
 					},
 					Readme: "Pulumi Neon Provider: Python SDK",
+				},
+				"csharp": csharpGen.CSharpPackageInfo{
+					RespectSchemaVersion: true,
+					PackageReferences: map[string]string{
+						"Pulumi": "3.*",
+					},
 				},
 			},
 		},

@@ -35,6 +35,7 @@ You will need to ensure the following tools are installed and present in your `$
 * [TypeScript](https://www.typescriptlang.org/)
 * [Python](https://www.python.org/downloads/) (called as `python3`).  For recent versions of MacOS, the system-installed version is fine.
 * [.NET](https://dotnet.microsoft.com/download)
+* java and gradle
 
 ### Build & test the Neon provider
 

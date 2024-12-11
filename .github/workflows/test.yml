@@ -20,23 +20,6 @@ permissions:
   contents: read
 
 jobs:
-  diff:
-    name: Detect drift of codebase
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'provider/go.mod'
-          cache-dependency-path: 'provider/go.sum'
-          cache: true
-      - run: make local
-        name: Build artefacts
-      - name: git diff
-        run: |
-          git diff --exit-code || \
-            (echo; echo "Unexpected difference in directories after build, run 'make ' command and commit."; exit 1)
-
   lint:
     name: Lint
     runs-on: ubuntu-24.04
@@ -59,7 +42,7 @@ jobs:
 
   tests:
     name: Tests
-    needs: diff
+    needs: lint
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

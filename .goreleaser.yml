@@ -7,7 +7,7 @@ before:
 
 builds:
   - env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=0n
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
       - '-s -w -X github.com/kislerdm/pulumi-neon/provider.Version={{.Version}}'
@@ -24,7 +24,6 @@ builds:
     ignore:
       - goos: darwin
         goarch: '386'
-    main: ./cmd/pulumi-resource-neon
     binary: 'pulumi-resource-neon'
 archives:
   - format: tar.gz

@@ -6,25 +6,23 @@ before:
     - go mod download
 
 builds:
-  - env:
-      - CGO_ENABLED=0n
-    mod_timestamp: '{{ .CommitTimestamp }}'
+  - binary: 'pulumi-resource-neon'
     ldflags:
       - '-s -w -X github.com/kislerdm/pulumi-neon/provider.Version={{.Version}}'
+
+    env:
+      - CGO_ENABLED=0n
+
     goos:
-      - freebsd
       - windows
       - linux
       - darwin
+
     goarch:
       - amd64
-      - '386'
-      - arm
       - arm64
-    ignore:
-      - goos: darwin
-        goarch: '386'
-    binary: 'pulumi-resource-neon'
+
+    mod_timestamp: '{{ .CommitTimestamp }}'
 
 archives:
   - format: tar.gz

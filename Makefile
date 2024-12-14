@@ -34,9 +34,14 @@ lint:: ## Lints the provider's codebase.
 	done
 
 go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Go SDK.
-	@ rm -rf sdk/go
+	@ mkdir -p sdk-go-temp
+	@ cp sdk/go.* sdk-go-temp/
+	@ rm -rf sdk/*
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language go
+	@ mv sdk-go-temp/* sdk && rm -r sdk-go-temp
 	@ cd sdk && mv go/sdk/* . && rm -r go
+	@ go mod tidy
+	@ cp sdk-readme/README-go.md sdk/README.md
 
 nodejs_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Node.js SDK.
 	@ rm -rf sdk-nodejs
@@ -52,7 +57,7 @@ nodejs_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Node.js SDK
 python_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates python SDK.
 	@ rm -rf sdk-python
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-python --language python
-	@ cp sdk-readme/README-python.md LICENSE sdk-python/python/
+	@ cp sdk-readme/README-python.md sdk-python/python/README.md && cp LICENSE sdk-python/python/
 	@ cd sdk-python/python/ && \
 		python3 setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \

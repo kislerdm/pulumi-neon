@@ -11,7 +11,7 @@ builds:
       - '-s -w -X github.com/kislerdm/pulumi-neon/provider.Version={{.Version}}'
 
     env:
-      - CGO_ENABLED=0n
+      - CGO_ENABLED=0
 
     goos:
       - windows

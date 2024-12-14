@@ -90,4 +90,4 @@ require (
 	pgregory.net/rapid v1.1.0 // indirect
 )
 
-replace github.com/kislerdm/pulumi-neon/sdk v0.0.1-alpha.0 => ./../../../../sdk
+replace github.com/kislerdm/pulumi-neon/sdk v0.0.1-alpha.0 => ./../../../sdk

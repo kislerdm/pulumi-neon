@@ -18,9 +18,8 @@ package main
 import (
 	"log"
 
-	p "github.com/pulumi/pulumi-go-provider"
-
 	neon "github.com/kislerdm/pulumi-neon/provider"
+	p "github.com/pulumi/pulumi-go-provider"
 )
 
 // Serve the provider against Pulumi's Provider protocol.

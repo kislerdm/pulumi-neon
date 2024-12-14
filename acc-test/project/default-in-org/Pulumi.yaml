@@ -1,0 +1,17 @@
+name: acc-test
+runtime: go
+description: 'Acceptance tests: project, default-in-org'
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: go
+      test: true
+      acctest: true
+      resource: project
+      type: default
+      in_org: true
+
+plugins:
+  providers:
+    - name: neon
+      path:  ../../../bin

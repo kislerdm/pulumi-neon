@@ -24,10 +24,13 @@ help: ## Prints help message.
 	@ grep -h -E '^[a-zA-Z0-9_-].+::.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1m%-30s\033[0m %s\n", $$1, $$2}'
 
 provider:: ## Builds provider.
-	cd provider && go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/${VERSION_PATH}=${VERSION}" $(PROJECT)/${PROVIDER_PATH}/cmd/$(PROVIDER)
+	go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/${VERSION_PATH}=${VERSION}"
 
-test_provider:: ## Tests provider
-	cd provider && go test -short -v -count=1 -cover -timeout 2h -parallel ${TESTPARALLELISM} ./...
+tests:: ## Runs unit tests.
+	cd provider && go test -short -v -count=1 -cover -timeout 30m -parallel ${TESTPARALLELISM} ./...
+
+acctests:: ## Runs acc tests.
+	cd acc-test && go test -short -v -timeout 30m -parallel 1 ./...
 
 dotnet_sdk:: ## Generates .Net SDK.
 	rm -rf sdk/dotnet

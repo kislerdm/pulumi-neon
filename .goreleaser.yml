@@ -25,14 +25,17 @@ builds:
       - goos: darwin
         goarch: '386'
     binary: 'pulumi-resource-neon'
+
 archives:
   - format: tar.gz
     name_template: 'pulumi-resource-neon-v{{ .Version }}-{{ .Os }}-{{ .Arch }}'
+
 checksum:
-  extra_files:
-    - glob: 'LICENSE'
   name_template: 'pulumi-resource-neon-v{{ .Version }}_SHA256SUMS'
   algorithm: sha256
+  extra_files:
+    - glob: 'schema.json'
+
 signs:
   - artifacts: checksum
     args:
@@ -45,8 +48,11 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
+
 release:
   extra_files:
     - glob: 'LICENSE'
+    - glob: 'schema.json'
+
 changelog:
   disable: true

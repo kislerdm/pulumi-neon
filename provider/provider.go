@@ -38,22 +38,33 @@ const (
 )
 
 func Provider() p.Provider {
+	const repository = "github.com/kislerdm/pulumi-neon"
 	o := infer.Provider(infer.Options{
 		Metadata: schema.Metadata{
 			Description:       "Pulumi Neon Provider",
 			DisplayName:       "Neon Provider",
 			Keywords:          []string{"pulumi", Name, "category/database"},
-			Homepage:          "https://github.com/kislerdm/pulumi-neon",
-			Repository:        "https://github.com/kislerdm/pulumi-neon",
+			Homepage:          "https://" + repository,
+			Repository:        "https://" + repository,
 			Publisher:         "Dmitry Kisler",
-			PluginDownloadURL: "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}",
+			PluginDownloadURL: "https://" + repository + "/releases/download/v${VERSION}",
 			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
 			License:           "Apache-2.0",
 			LanguageMap: map[string]any{
 				"go": goGen.GoPackageInfo{
+					ImportBasePath:  repository + "/sdk",
+					ModulePath:      "foo",
+					RootPackageName: "",
+					ModuleToPackage: nil,
+					PackageImportAliases: map[string]string{
+						repository + "/sdk/neon/provider": "pulumi-neon",
+					},
+					ImportPathPattern:              "{baseImportPath}",
 					GenerateResourceContainerTypes: true,
-					RespectSchemaVersion:           true,
 					PulumiSDKVersion:               3,
+					LiftSingleValueMethodReturns:   true,
+					InternalModuleName:             "",
+					RespectSchemaVersion:           true,
 				},
 				"nodejs": nodejsGen.NodePackageInfo{
 					RespectSchemaVersion: true,

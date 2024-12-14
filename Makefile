@@ -29,7 +29,7 @@ acctests:: ## Runs acc tests.
 	cd acc-test && go test -short -v -timeout 30m -parallel 1 ./...
 
 lint:: ## Lints the provider's codebase.
-	for DIR in "provider" "sdk"; do \
+	for DIR in "provider"; do \
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 

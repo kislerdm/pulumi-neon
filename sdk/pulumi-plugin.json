@@ -1,6 +1,6 @@
 {
   "resource": true,
   "name": "neon",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.0",
   "server": "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}"
 }

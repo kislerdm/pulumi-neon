@@ -110,8 +110,8 @@ func TestProject(t *testing.T) {
 		integration.ProgramTest(t, &integration.ProgramTestOptions{
 			Quick:       true,
 			SkipRefresh: true,
-			PrepareProject: func(projinfo *engine.Projinfo) error {
-				return fsutil.CopyFile(projinfo.Root, sdkPath, nil)
+			PrePrepareProject: func(projinfo *engine.Projinfo) (err error) {
+				return fsutil.CopyFile(path.Join(projinfo.Root, "/sdk"), sdkPath, nil)
 			},
 			Dir: path.Join(cwd, "default"),
 			Secrets: map[string]string{
@@ -137,8 +137,8 @@ func TestProject(t *testing.T) {
 		integration.ProgramTest(t, &integration.ProgramTestOptions{
 			Quick:       true,
 			SkipRefresh: true,
-			PrepareProject: func(projinfo *engine.Projinfo) error {
-				return fsutil.CopyFile(projinfo.Root, sdkPath, nil)
+			PrePrepareProject: func(projinfo *engine.Projinfo) error {
+				return fsutil.CopyFile(path.Join(projinfo.Root, "/sdk"), sdkPath, nil)
 			},
 			Dir: path.Join(cwd, "custom-name"),
 			Secrets: map[string]string{
@@ -179,8 +179,8 @@ func TestProjectInOrganization(t *testing.T) {
 	integration.ProgramTest(t, &integration.ProgramTestOptions{
 		Quick:       true,
 		SkipRefresh: true,
-		PrepareProject: func(projinfo *engine.Projinfo) error {
-			return fsutil.CopyFile(projinfo.Root, sdkPath, nil)
+		PrePrepareProject: func(projinfo *engine.Projinfo) error {
+			return fsutil.CopyFile(path.Join(projinfo.Root, "/sdk"), sdkPath, nil)
 		},
 		Dir: path.Join(cwd, "default-in-org"),
 		Env: []string{"ORG_ID=" + orgID},

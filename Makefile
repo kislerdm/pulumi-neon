@@ -8,16 +8,20 @@ GO_SDK			 := pulumi-sdk-neon
 PACK             := neon
 NODE_MODULE_NAME := @neon
 NUGET_PKG_NAME   := neon
+PY_PKG_NAME		 := pulumi_neon
 
 PROVIDER        := pulumi-resource-${PACK}
-VERSION         ?= 0.0.1+$(shell git rev-parse --short HEAD)
+
+VERSION 		:=
+VERSION_SET     ?= $(if $(VERSION),$(VERSION),$(shell pulumictl get version))
+VERSION_PY      ?= $(if $(VERSION),$(VERSION),$(shell pulumictl get version --language python))
 
 .PHONY: help
 help: ## Prints help message.
 	@ grep -h -E '^[a-zA-Z0-9_-].+::.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1m%-30s\033[0m %s\n", $$1, $$2}'
 
 .provider:
-	@ CGO_ENABLED=0 go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/provider.Version=${VERSION}"
+	@ CGO_ENABLED=0 go build -o $(WORKING_DIR)/bin/${PROVIDER} -ldflags "-X ${PROJECT}/provider.Version=${VERSION_SET}"
 
 provider:: .provider gen_schema ## Builds provider.
 
@@ -35,7 +39,9 @@ lint:: ## Lints the provider's codebase.
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 
-go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
+verify_version:: ## Checks that the schema version corresponds to release version.
+
+sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
 	@ rm -rf $(WORKING_DIR)/$(GO_SDK)
 	@ git submodule update --depth 0 --recursive
 	@ cp -r sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp LICENSE $(WORKING_DIR)/$(GO_SDK)/
@@ -43,34 +49,36 @@ go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-tem
 	@ cd $(WORKING_DIR)/$(GO_SDK) && mv go/$(GO_SDK)/* . && rm -r go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy
 
-nodejs_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Node.js SDK.
+sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Node.js SDK.
 	@ rm -rf sdk-nodejs
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-nodejs --language nodejs
 	@ cd sdk-nodejs/nodejs/ && \
 		npm install && \
 		npm run build && \
-		cp ../../sdk-readme/README-nodejs.md bin/README.md && \
+		cp ../../sdk-template/nodejs/README.md bin/README.md && \
 		cp ../../LICENSE package.json package-lock.json bin/ && \
-		sed -i.bak 's/$${VERSION}/$(VERSION)/g' bin/package.json && \
+		sed -i.bak 's/$${VERSION_SET}/$(VERSION_SET)/g' bin/package.json && \
 		rm ./bin/package.json.bak
 
-python_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates python SDK.
+sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates python SDK.
 	@ rm -rf sdk-python
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-python --language python
-	@ cp sdk-readme/README-python.md sdk-python/python/README.md && cp LICENSE sdk-python/python/
-	@ cd sdk-python/python/ && \
+	@ cp sdk-template/python/README.md sdk-python/python/README.md && \
+ 		cp LICENSE sdk-python/python/$(PY_PKG_NAME)/
+	@ cd sdk-python/python && \
+		python3 -m venv .venv && source .venv/bin/activate && pip install setuptools 2>&1 > /dev/null && \
 		python3 setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \
-		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION)"/g' ./bin/setup.py && \
+		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION_PY)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION_PY)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
-		cd ./bin && python3 setup.py build sdist
+		cd ./bin && python3 setup.py build sdist 2 > /dev/null
 
 dotnet_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates .Net SDK.
 	@ rm -rf sdk-dotnet
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-dotnet --language dotnet
 	@ cd sdk-dotnet/dotnet/&& \
-		echo "${VERSION}" >version.txt && \
-		dotnet build /p:Version=${VERSION}
+		echo "${VERSION_SET}" >version.txt && \
+		dotnet build /p:Version=${VERSION_SET}
 
 java_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates Go SDK.
 	@ rm -rf sdk-java

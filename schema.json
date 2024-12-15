@@ -1,7 +1,7 @@
 {
   "name": "neon",
   "displayName": "Neon Provider",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1-alpha.1",
   "description": "Pulumi Neon Provider",
   "keywords": [
     "pulumi",
@@ -25,12 +25,10 @@
       "respectSchemaVersion": true
     },
     "go": {
-      "importBasePath": "github.com/kislerdm/pulumi-neon/sdk",
-      "modulePath": "foo",
+      "importBasePath": "github.com/kislerdm/pulumi-sdk-neon",
       "packageImportAliases": {
-        "github.com/kislerdm/pulumi-neon/sdk/neon/provider": "pulumi-neon"
+        "github.com/kislerdm/pulumi-sdk-neon/provider": "pulumiNeon"
       },
-      "importPathPattern": "{baseImportPath}",
       "generateResourceContainerTypes": true,
       "pulumiSDKVersion": 3,
       "liftSingleValueMethodReturns": true,

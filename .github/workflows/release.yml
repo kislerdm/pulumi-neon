@@ -78,7 +78,6 @@ jobs:
           path: ./bin/pulumi-resource-neon
           overwrite: true
           retention-days: 1
-          compression-level: 0
 
   build-sdk:
     runs-on: ubuntu-24.04
@@ -95,15 +94,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: pulumi-resource-neon
-          path: ./bin/pulumi-resource-neon
+        name: Download built provider
+      - name: Unzip built provider
+        run: |
+           mkdir -p ./bin
+           unzip ./bin pulumi-resource-neon.zip
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
-      - run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew tap pulumi/tap
-          brew install pulumictl
-        name: Install pulumictl
       - name: Build SDK
         run: make sdk_${{matrix.language}} VERSION=${{ needs.version.outputs.version }}
       - name: Upload tar.gz to artifacts
@@ -113,6 +111,8 @@ jobs:
           path: ./bin/${{matrix.language}}-sdk.tar.gz
           overwrite: true
           retention-days: 1
+          compression-level: 0
+
 
   release-sdk-go:
     runs-on: ubuntu-24.04
@@ -127,14 +127,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: pulumi-resource-neon
-          path: ./bin/pulumi-resource-neon
+        name: Download built provider
+      - name: Unzip built provider
+        run: |
+         mkdir -p ./bin
+         unzip ./bin pulumi-resource-neon.zip
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
-      - run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew tap pulumi/tap
-          brew install pulumictl
         name: Install pulumictl
       - name: Build SDK
         run: make sdk_go

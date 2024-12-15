@@ -24,10 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '1'
-      - run: |
-          if [ "$(make read_version)" != "${{ needs.version.outputs.version }}" ]; then 
-            echo inconsistent versions && exit 1
-          fi
+      - run: make verify_version VERSION=${{ needs.version.outputs.version }}
 
   release-provider:
     runs-on: ubuntu-24.04

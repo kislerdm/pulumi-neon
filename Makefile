@@ -43,6 +43,7 @@ lint:: ## Lints the provider's codebase.
 	done
 
 verify_version:: ## Checks that the schema version corresponds to release version.
+	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 
 sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
 	@ rm -rf $(WORKING_DIR)/$(GO_SDK)

@@ -63,6 +63,14 @@ jobs:
           go-version-file: 'go.mod'
           cache-dependency-path: 'go.sum'
           cache: true
+      - uses: pulumi/actions@v6
+        with:
+          pulumi-version: "3.142.0"
+      - run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew tap pulumi/tap
+          brew install pulumictl
+        name: Install pulumictl
       - run: make provider
       - uses: actions/upload-artifact@v4
         with:
@@ -70,10 +78,13 @@ jobs:
           path: ./bin/pulumi-resource-neon
           overwrite: true
           retention-days: 1
+          compression-level: 0
 
   build-sdk:
     runs-on: ubuntu-24.04
-    needs: build-provider
+    needs:
+      - build-provider
+      - version
     strategy:
       matrix:
         language: ["nodejs", "python"]
@@ -85,6 +96,14 @@ jobs:
         with:
           name: pulumi-resource-neon
           path: ./bin/pulumi-resource-neon
+      - uses: pulumi/actions@v6
+        with:
+          pulumi-version: "3.142.0"
+      - run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew tap pulumi/tap
+          brew install pulumictl
+        name: Install pulumictl
       - name: Build SDK
         run: make sdk_${{matrix.language}} VERSION=${{ needs.version.outputs.version }}
       - name: Upload tar.gz to artifacts
@@ -97,12 +116,26 @@ jobs:
 
   release-sdk-go:
     runs-on: ubuntu-24.04
-    needs: build-provider
+    needs:
+      - build-provider
+      - version
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '1'
           submodules: 'recursive'
+      - uses: actions/download-artifact@v4
+        with:
+          name: pulumi-resource-neon
+          path: ./bin/pulumi-resource-neon
+      - uses: pulumi/actions@v6
+        with:
+          pulumi-version: "3.142.0"
+      - run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew tap pulumi/tap
+          brew install pulumictl
+        name: Install pulumictl
       - name: Build SDK
         run: make sdk_go
       - name: Authorize Git

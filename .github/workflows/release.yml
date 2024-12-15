@@ -66,11 +66,6 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
-      - run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew tap pulumi/tap
-          brew install pulumictl
-        name: Install pulumictl
       - run: make provider
       - uses: actions/upload-artifact@v4
         with:
@@ -98,7 +93,7 @@ jobs:
       - name: Unzip built provider
         run: |
            mkdir -p ./bin
-           unzip ./bin pulumi-resource-neon.zip
+           unzip pulumi-resource-neon.zip -d ./bin
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
@@ -131,7 +126,7 @@ jobs:
       - name: Unzip built provider
         run: |
          mkdir -p ./bin
-         unzip ./bin pulumi-resource-neon.zip
+         unzip pulumi-resource-neon.zip -d ./bin
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"

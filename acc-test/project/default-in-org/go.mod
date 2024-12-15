@@ -3,7 +3,7 @@ module acctest
 go 1.23.1
 
 require (
-	github.com/kislerdm/pulumi-neon/sdk v0.0.1
+	github.com/kislerdm/pulumi-sdk-neon v0.0.1
 	github.com/pulumi/pulumi/sdk/v3 v3.134.1
 )
 
@@ -33,6 +33,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -90,4 +91,4 @@ require (
 	pgregory.net/rapid v1.1.0 // indirect
 )
 
-replace github.com/kislerdm/pulumi-neon/sdk v0.0.1 => ./sdk
+replace github.com/kislerdm/pulumi-sdk-neon v0.0.1 => ./sdk

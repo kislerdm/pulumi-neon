@@ -3,8 +3,7 @@ module acctest
 go 1.23.1
 
 require (
-	github.com/kislerdm/pulumi-neon/sdk v0.0.1
-	github.com/pulumi/pulumi/sdk/v3 v3.134.1
+	github.com/kislerdm/pulumi-sdk-neon v0.0.1
 )
 
 require (
@@ -90,4 +89,4 @@ require (
 	pgregory.net/rapid v1.1.0 // indirect
 )
 
-replace github.com/kislerdm/pulumi-neon/sdk v0.0.1 => ./sdk
+replace github.com/kislerdm/pulumi-sdk-neon v0.0.1 => ./sdk

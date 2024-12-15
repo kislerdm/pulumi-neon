@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kislerdm/pulumi-neon/sdk/provider"
+	"github.com/kislerdm/pulumi-sdk-neon/provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 

@@ -27,7 +27,7 @@ func init() {
 		panic(err)
 	}
 
-	sdkPath = path.Join(cwd, "..", "..", "sdk")
+	sdkPath = path.Join(cwd, "..", "..", "pulumi-sdk-neon")
 	_, err = os.ReadDir(sdkPath)
 	if err != nil {
 		panic(fmt.Sprintf("SDK not found in %s: %v", sdkPath, err))

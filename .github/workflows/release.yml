@@ -3,14 +3,39 @@ on:
   push:
     tags:
       - 'v*'
+
 permissions:
   contents: write
 
 jobs:
-  release-provider:
+  version:
     runs-on: ubuntu-24.04
+    name: Calculate version
+    steps:
+      - id: version
+        uses: pulumi/provider-version-action@v1
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+  verify-schema:
+    runs-on: ubuntu-24.04
+    needs: version
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+      - run: |
+          if [ "$(make read_version)" != "${{ needs.version.outputs.version }}" ]; then 
+            echo inconsistent versions && exit 1
+          fi
+
+  release-provider:
+    runs-on: ubuntu-24.04
+    needs: verify-schema
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -29,4 +54,71 @@ jobs:
           args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-provider:
+    runs-on: ubuntu-24.04
+    needs: verify-schema
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+          cache: true
+      - run: make provider
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pulumi-resource-neon
+          path: ./bin/pulumi-resource-neon
+          overwrite: true
+          retention-days: 1
+
+  build-sdk:
+    runs-on: ubuntu-24.04
+    needs: build-provider
+    strategy:
+      matrix:
+        language: ["nodejs", "python"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+      - uses: actions/download-artifact@v4
+        with:
+          name: pulumi-resource-neon
+          path: ./bin/pulumi-resource-neon
+      - name: Build SDK
+        run: make sdk_${{matrix.language}} VERSION=${{ needs.version.outputs.version }}
+      - name: Upload tar.gz to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.language}}-sdk.tar.gz
+          path: ./bin/${{matrix.language}}-sdk.tar.gz
+          overwrite: true
+          retention-days: 1
+
+  release-sdk-go:
+    runs-on: ubuntu-24.04
+    needs: build-provider
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+          submodules: 'recursive'
+      - name: Build SDK
+        run: make sdk_go
+      - name: Authorize Git
+        run: |
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+      - name: Release new SDK version
+        run: |
+          cd pulumi-sdk-neon
+          git add -a .
+          git commit -m "release ${{ needs.version.outputs.version }}"
+          git push origin master
+          git tag v${{ needs.version.outputs.version }}
+          git push origing v${{ needs.version.outputs.version }}
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

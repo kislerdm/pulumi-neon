@@ -36,11 +36,12 @@ lint:: ## Lints the provider's codebase.
 	done
 
 go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
-	@ rm -rf $(GO_SDK)/*
-	@ cp -r sdk-template/go/* $(GO_SDK)/ && cp LICENSE $(GO_SDK)/
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o $$(GO_SDK) --language go
-	@ cd $(GO_SDK) && mv go/* . && rm -r go
-	@ cd $(GO_SDK) && go mod tidy
+	@ rm -rf $(WORKING_DIR)/$(GO_SDK)
+	@ git submodule update --depth 0 --recursive
+	@ cp -r sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp LICENSE $(WORKING_DIR)/$(GO_SDK)/
+	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o $(WORKING_DIR)/$(GO_SDK) --language go
+	@ cd $(WORKING_DIR)/$(GO_SDK) && mv go/$(GO_SDK)/* . && rm -r go
+	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy
 
 nodejs_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Node.js SDK.
 	@ rm -rf sdk-nodejs

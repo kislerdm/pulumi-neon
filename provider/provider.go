@@ -52,18 +52,13 @@ func Provider() p.Provider {
 			License:           "Apache-2.0",
 			LanguageMap: map[string]any{
 				"go": goGen.GoPackageInfo{
-					ImportBasePath:  repository + "/sdk",
-					ModulePath:      "foo",
-					RootPackageName: "",
-					ModuleToPackage: nil,
+					ImportBasePath: "github.com/kislerdm/pulumi-sdk-neon",
 					PackageImportAliases: map[string]string{
-						repository + "/sdk/neon/provider": "pulumi-neon",
+						"github.com/kislerdm/pulumi-sdk-neon/provider": "pulumiNeon",
 					},
-					ImportPathPattern:              "{baseImportPath}",
-					GenerateResourceContainerTypes: true,
 					PulumiSDKVersion:               3,
+					GenerateResourceContainerTypes: true,
 					LiftSingleValueMethodReturns:   true,
-					InternalModuleName:             "",
 					RespectSchemaVersion:           true,
 				},
 				"nodejs": nodejsGen.NodePackageInfo{

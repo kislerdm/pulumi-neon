@@ -2,7 +2,9 @@ SHELL := /bin/bash
 GOPATH			:= $(shell go env GOPATH)
 WORKING_DIR     := $(shell pwd)
 
-PROJECT          := github.com/kislerdm/pulumi-neon
+GITHANDLE 		 := github.com/kislerdm
+PROJECT          := $(GITHANDLE)/pulumi-neon
+GO_SDK			 := pulumi-sdk-neon
 PACK             := neon
 NODE_MODULE_NAME := @neon
 NUGET_PKG_NAME   := neon
@@ -33,15 +35,12 @@ lint:: ## Lints the provider's codebase.
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 
-go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Go SDK.
-	@ mkdir -p sdk-go-temp
-	@ cp sdk/go.* sdk-go-temp/
-	@ rm -rf sdk/*
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language go
-	@ mv sdk-go-temp/* sdk && rm -r sdk-go-temp
-	@ cd sdk && mv go/sdk/* . && rm -r go
-	@ go mod tidy
-	@ cp sdk-readme/README-go.md sdk/README.md
+go_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
+	@ rm -rf $(GO_SDK)/*
+	@ cp -r sdk-template/go/* $(GO_SDK)/ && cp LICENSE $(GO_SDK)/
+	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o $$(GO_SDK) --language go
+	@ cd $(GO_SDK) && mv go/* . && rm -r go
+	@ cd $(GO_SDK) && go mod tidy
 
 nodejs_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json ## Generates Node.js SDK.
 	@ rm -rf sdk-nodejs

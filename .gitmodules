@@ -1,0 +1,3 @@
+[submodule "pulumi-sdk-neon"]
+	path = pulumi-sdk-neon
+	url = git@github.com:kislerdm/pulumi-sdk-neon.git

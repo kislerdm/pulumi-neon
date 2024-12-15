@@ -1,4 +1,4 @@
-module github.com/kislerdm/pulumi-neon/sdk
+module github.com/kislerdm/pulumi-sdk-neon
 
 go 1.23.1
 

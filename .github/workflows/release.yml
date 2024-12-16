@@ -77,7 +77,7 @@ jobs:
   build-sdk:
     runs-on: ubuntu-24.04
     needs:
-#      - build-provider
+      - build-provider
       - version
     strategy:
       matrix:

@@ -62,15 +62,16 @@ func Provider() p.Provider {
 					RespectSchemaVersion:           true,
 				},
 				"nodejs": nodejsGen.NodePackageInfo{
-					RespectSchemaVersion: true,
-					Readme:               "Pulumi Neon Provider: NodeJS SDK",
+					PackageName:                  "@dkisler/neon",
+					LiftSingleValueMethodReturns: true,
+					RespectSchemaVersion:         true,
 				},
 				"python": pythonGen.PackageInfo{
-					RespectSchemaVersion: true,
 					Requires: map[string]string{
 						"pulumi": ">=3.0.0,<4.0.0",
 					},
-					Readme: "Pulumi Neon Provider: Python SDK",
+					LiftSingleValueMethodReturns: true,
+					RespectSchemaVersion:         true,
 				},
 				"csharp": csharpGen.CSharpPackageInfo{
 					RespectSchemaVersion: true,

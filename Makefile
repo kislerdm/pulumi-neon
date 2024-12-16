@@ -6,8 +6,6 @@ GITHANDLE 		 := github.com/kislerdm
 PROJECT          := $(GITHANDLE)/pulumi-neon
 GO_SDK			 := pulumi-sdk-neon
 PACK             := neon
-NODE_MODULE_NAME := @neon
-NUGET_PKG_NAME   := neon
 PY_PKG_NAME		 := pulumi_neon
 
 PROVIDER        := pulumi-resource-${PACK}
@@ -47,7 +45,7 @@ verify_version:: ## Checks that the schema version corresponds to release versio
 
 sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
 	@ rm -rf $(WORKING_DIR)/$(GO_SDK)
-	@ git submodule update --depth 0 --recursive --remote -f
+	@ git submodule update --depth 1 --init --recursive --remote -f
 	@ cp -r sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp LICENSE $(WORKING_DIR)/$(GO_SDK)/
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o $(WORKING_DIR)/$(GO_SDK) --language go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && mv go/$(GO_SDK)/* . && rm -r go
@@ -64,10 +62,6 @@ sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/nodejs/READ
 		cp ../../LICENSE package.json package-lock.json bin/ && \
 		sed -i.bak 's/$${VERSION_SET}/$(VERSION_SET)/g' bin/package.json && \
 		rm ./bin/package.json.bak
-	@ mkdir -p bin/nodejs-sdk && \
-		cp -r sdk-nodejs/nodejs/bin/* bin/nodejs-sdk/ && \
-		cd bin && tar -czf nodejs-sdk.tar.gz nodejs-sdk && \
-		rm -r nodejs-sdk
 
 sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates python SDK.
 	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
@@ -82,7 +76,6 @@ sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/READ
 		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION_PY)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION_PY)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist 2>/dev/null
-	@ mkdir -p bin && cp sdk-python/python/bin/dist/*.tar.gz bin/python-sdk.tar.gz
 
 dotnet_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates .Net SDK.
 	@ rm -rf sdk-dotnet

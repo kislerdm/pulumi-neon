@@ -17,134 +17,110 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
 
-#  verify-schema:
-#    runs-on: ubuntu-24.04
-#    needs: version
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          fetch-depth: '1'
-#      - run: make verify_version VERSION=${{ needs.version.outputs.version }}
-
-#  release-provider:
-#    runs-on: ubuntu-24.04
-#    needs: verify-schema
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          fetch-depth: '1'
-#      - uses: actions/setup-go@v5
-#        with:
-#          go-version-file: 'go.mod'
-#          cache-dependency-path: 'go.sum'
-#          cache: true
-#      - name: Import GPG key
-#        uses: crazy-max/ghaction-import-gpg@v6
-#        id: import_gpg
-#        with:
-#          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-#          passphrase: ${{ secrets.PASSPHRASE }}
-#      - name: Release provider
-#        uses: goreleaser/goreleaser-action@v6.1.0
-#        with:
-#          version: '~> v2'
-#          args: release --clean
-#        env:
-#          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-provider:
+  verify-schema:
     runs-on: ubuntu-24.04
-#    needs: verify-schema
+    needs: version
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+      - run: make verify_version VERSION=${{ needs.version.outputs.version }}
+
+  release-provider:
+    runs-on: ubuntu-24.04
+    needs: verify-schema
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
           cache-dependency-path: 'go.sum'
           cache: true
-      - uses: pulumi/actions@v6
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        id: import_gpg
         with:
-          pulumi-version: "3.142.0"
-      - run: make provider
-      - uses: actions/upload-artifact@v4
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+      - name: Release provider
+        uses: goreleaser/goreleaser-action@v6.1.0
         with:
-          name: pulumi-resource-neon
-          path: ./bin/pulumi-resource-neon
-          overwrite: true
-          retention-days: 1
+          version: '~> v2'
+          args: release --clean
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-sdk:
+  publish-sdks:
     runs-on: ubuntu-24.04
     needs:
-      - build-provider
-      - version
-    strategy:
-      matrix:
-        language: ["nodejs", "python"]
+      - verify-schema
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '1'
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-go@v5
         with:
-          name: pulumi-resource-neon
-          path: ./bin/pulumi-resource-neon.zip
-        name: Download built provider
-
-      - name: Unzip built provider
-        run: cd ./bin && unzip pulumi-resource-neon.zip
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+          cache: true
 
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
-      - name: Build SDK
-        run: make sdk_${{matrix.language}} VERSION=${{ needs.version.outputs.version }}
-      - name: Upload tar.gz to artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.language}}-sdk.tar.gz
-          path: ./bin/${{matrix.language}}-sdk.tar.gz
-          overwrite: true
-          retention-days: 1
-          compression-level: 0
 
-#  release-sdk-go:
-#    runs-on: ubuntu-24.04
-#    needs:
-#      - build-provider
-#      - version
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          fetch-depth: '1'
-#          submodules: 'recursive'
-#      - uses: actions/download-artifact@v4
-#        with:
-#          name: pulumi-resource-neon
-#          path: ./bin/pulumi-resource-neon.zip
-#        name: Download built provider
-#      - name: Unzip built provider
-#        run: |
-#         mkdir -p ./bin
-#         unzip pulumi-resource-neon.zip -d ./bin
-#      - uses: pulumi/actions@v6
-#        with:
-#          pulumi-version: "3.142.0"
-#        name: Install pulumictl
-#      - name: Build SDK
-#        run: make sdk_go
-#      - name: Authorize Git
-#        run: |
-#          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
-#          git config --global user.name "$GITHUB_ACTOR"
-#      - name: Release new SDK version
-#        run: |
-#          cd pulumi-sdk-neon
-#          git add -a .
-#          git commit -m "release ${{ needs.version.outputs.version }}"
-#          git push origin master
-#          git tag v${{ needs.version.outputs.version }}
-#          git push origing v${{ needs.version.outputs.version }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: make provider
+        name: Build provider
+
+      - name: Build SDK - go
+        run: make sdk_go
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build SDK - python
+        run: make sdk_python VERSION=${{ needs.version.outputs.version }}
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Build SDK - nodejs
+        run: make sdk_nodejs VERSION=${{ needs.version.outputs.version }}
+
+      - name: Publish SDK - go
+        run: |
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+          
+          cd pulumi-sdk-neon
+          git checkout master
+          git add .
+          git commit -m "release ${{ needs.version.outputs.version }}"
+          git push origin master
+          git tag v${{ needs.version.outputs.version }}
+          git push origin v${{ needs.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish SDK - python
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: "${{ github.workspace }}/sdk-python/bin/dist/"
+          skip-existing: true
+          verbose: true
+
+      - name: Publish SDK - nodejs
+        run: |
+          npm ci
+          npm publish --provenance --access public
+          env:
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -35,14 +35,15 @@
       "respectSchemaVersion": true
     },
     "nodejs": {
-      "readme": "Pulumi Neon Provider: NodeJS SDK",
+      "packageName": "@dkisler/neon",
+      "liftSingleValueMethodReturns": true,
       "respectSchemaVersion": true
     },
     "python": {
       "requires": {
         "pulumi": "\u003e=3.0.0,\u003c4.0.0"
       },
-      "readme": "Pulumi Neon Provider: Python SDK",
+      "liftSingleValueMethodReturns": true,
       "respectSchemaVersion": true,
       "pyproject": {}
     }

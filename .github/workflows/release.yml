@@ -90,8 +90,6 @@ jobs:
         with:
           name: pulumi-resource-neon
           path: ./bin/pulumi-resource-neon.zip
-          # TODO: delete after tests
-          run-id: '12362393623'
         name: Download built provider
       - name: Check work directory
         run: |

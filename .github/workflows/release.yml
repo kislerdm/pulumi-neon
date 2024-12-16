@@ -91,15 +91,10 @@ jobs:
           name: pulumi-resource-neon
           path: ./bin/pulumi-resource-neon.zip
         name: Download built provider
-      - name: Check work directory
-        run: |
-          pwd
-          ls -lah ./bin
-          ls -lah
 
       - name: Unzip built provider
-        run: unzip pulumi-resource-neon.zip
-        working-directory: ./bin
+        run: cd ./bin && unzip pulumi-resource-neon.zip
+
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"

@@ -17,14 +17,14 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
 
-  verify-schema:
-    runs-on: ubuntu-24.04
-    needs: version
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-      - run: make verify_version VERSION=${{ needs.version.outputs.version }}
+#  verify-schema:
+#    runs-on: ubuntu-24.04
+#    needs: version
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: '1'
+#      - run: make verify_version VERSION=${{ needs.version.outputs.version }}
 
 #  release-provider:
 #    runs-on: ubuntu-24.04
@@ -53,31 +53,31 @@ jobs:
 #          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-provider:
-    runs-on: ubuntu-24.04
-    needs: verify-schema
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache-dependency-path: 'go.sum'
-          cache: true
-      - uses: pulumi/actions@v6
-        with:
-          pulumi-version: "3.142.0"
-      - run: make provider
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pulumi-resource-neon
-          path: ./bin/pulumi-resource-neon
-          overwrite: true
-          retention-days: 1
+#  build-provider:
+#    runs-on: ubuntu-24.04
+#    needs: verify-schema
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: actions/setup-go@v5
+#        with:
+#          go-version-file: 'go.mod'
+#          cache-dependency-path: 'go.sum'
+#          cache: true
+#      - uses: pulumi/actions@v6
+#        with:
+#          pulumi-version: "3.142.0"
+#      - run: make provider
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: pulumi-resource-neon
+#          path: ./bin/pulumi-resource-neon
+#          overwrite: true
+#          retention-days: 1
 
   build-sdk:
     runs-on: ubuntu-24.04
     needs:
-      - build-provider
+#      - build-provider
       - version
     strategy:
       matrix:
@@ -90,7 +90,15 @@ jobs:
         with:
           name: pulumi-resource-neon
           path: ./bin/pulumi-resource-neon.zip
+          # TODO: delete after tests
+          run-id: '12362393623'
         name: Download built provider
+      - name: Check work directory
+        run: |
+          pwd
+          ls -lah ./bin
+          ls -lah
+
       - name: Unzip built provider
         run: unzip pulumi-resource-neon.zip
         working-directory: ./bin

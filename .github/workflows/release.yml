@@ -26,32 +26,32 @@ jobs:
           fetch-depth: '1'
       - run: make verify_version VERSION=${{ needs.version.outputs.version }}
 
-  release-provider:
-    runs-on: ubuntu-24.04
-    needs: verify-schema
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache-dependency-path: 'go.sum'
-          cache: true
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        id: import_gpg
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
-      - name: Release provider
-        uses: goreleaser/goreleaser-action@v6.1.0
-        with:
-          version: '~> v2'
-          args: release --clean
-        env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#  release-provider:
+#    runs-on: ubuntu-24.04
+#    needs: verify-schema
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: '1'
+#      - uses: actions/setup-go@v5
+#        with:
+#          go-version-file: 'go.mod'
+#          cache-dependency-path: 'go.sum'
+#          cache: true
+#      - name: Import GPG key
+#        uses: crazy-max/ghaction-import-gpg@v6
+#        id: import_gpg
+#        with:
+#          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+#          passphrase: ${{ secrets.PASSPHRASE }}
+#      - name: Release provider
+#        uses: goreleaser/goreleaser-action@v6.1.0
+#        with:
+#          version: '~> v2'
+#          args: release --clean
+#        env:
+#          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-provider:
     runs-on: ubuntu-24.04
@@ -89,12 +89,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: pulumi-resource-neon
-          path: pulumi-resource-neon.zip
+          path: ./bin/pulumi-resource-neon.zip
         name: Download built provider
       - name: Unzip built provider
-        run: |
-           mkdir -p ./bin
-           unzip pulumi-resource-neon.zip -d ./bin
+        run: unzip pulumi-resource-neon.zip
+        working-directory: ./bin
       - uses: pulumi/actions@v6
         with:
           pulumi-version: "3.142.0"
@@ -109,43 +108,42 @@ jobs:
           retention-days: 1
           compression-level: 0
 
-
-  release-sdk-go:
-    runs-on: ubuntu-24.04
-    needs:
-      - build-provider
-      - version
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-          submodules: 'recursive'
-      - uses: actions/download-artifact@v4
-        with:
-          name: pulumi-resource-neon
-          path: pulumi-resource-neon.zip
-        name: Download built provider
-      - name: Unzip built provider
-        run: |
-         mkdir -p ./bin
-         unzip pulumi-resource-neon.zip -d ./bin
-      - uses: pulumi/actions@v6
-        with:
-          pulumi-version: "3.142.0"
-        name: Install pulumictl
-      - name: Build SDK
-        run: make sdk_go
-      - name: Authorize Git
-        run: |
-          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git config --global user.name "$GITHUB_ACTOR"
-      - name: Release new SDK version
-        run: |
-          cd pulumi-sdk-neon
-          git add -a .
-          git commit -m "release ${{ needs.version.outputs.version }}"
-          git push origin master
-          git tag v${{ needs.version.outputs.version }}
-          git push origing v${{ needs.version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#  release-sdk-go:
+#    runs-on: ubuntu-24.04
+#    needs:
+#      - build-provider
+#      - version
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: '1'
+#          submodules: 'recursive'
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: pulumi-resource-neon
+#          path: ./bin/pulumi-resource-neon.zip
+#        name: Download built provider
+#      - name: Unzip built provider
+#        run: |
+#         mkdir -p ./bin
+#         unzip pulumi-resource-neon.zip -d ./bin
+#      - uses: pulumi/actions@v6
+#        with:
+#          pulumi-version: "3.142.0"
+#        name: Install pulumictl
+#      - name: Build SDK
+#        run: make sdk_go
+#      - name: Authorize Git
+#        run: |
+#          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+#          git config --global user.name "$GITHUB_ACTOR"
+#      - name: Release new SDK version
+#        run: |
+#          cd pulumi-sdk-neon
+#          git add -a .
+#          git commit -m "release ${{ needs.version.outputs.version }}"
+#          git push origin master
+#          git tag v${{ needs.version.outputs.version }}
+#          git push origing v${{ needs.version.outputs.version }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

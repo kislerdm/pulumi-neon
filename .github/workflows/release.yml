@@ -53,26 +53,26 @@ jobs:
 #          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#  build-provider:
-#    runs-on: ubuntu-24.04
+  build-provider:
+    runs-on: ubuntu-24.04
 #    needs: verify-schema
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-go@v5
-#        with:
-#          go-version-file: 'go.mod'
-#          cache-dependency-path: 'go.sum'
-#          cache: true
-#      - uses: pulumi/actions@v6
-#        with:
-#          pulumi-version: "3.142.0"
-#      - run: make provider
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          name: pulumi-resource-neon
-#          path: ./bin/pulumi-resource-neon
-#          overwrite: true
-#          retention-days: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+          cache: true
+      - uses: pulumi/actions@v6
+        with:
+          pulumi-version: "3.142.0"
+      - run: make provider
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pulumi-resource-neon
+          path: ./bin/pulumi-resource-neon
+          overwrite: true
+          retention-days: 1
 
   build-sdk:
     runs-on: ubuntu-24.04

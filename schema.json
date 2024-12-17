@@ -22,6 +22,8 @@
       "packageReferences": {
         "Pulumi": "3.*"
       },
+      "liftSingleValueMethodReturns": true,
+      "rootNamespace": "PulumiSdk",
       "respectSchemaVersion": true
     },
     "go": {
@@ -96,7 +98,7 @@
     ]
   },
   "resources": {
-    "neon:provider:Project": {
+    "neon:resource:Project": {
       "properties": {
         "connection_uri": {
           "type": "string",

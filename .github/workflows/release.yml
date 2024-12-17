@@ -106,6 +106,9 @@ jobs:
       - name: Build SDK - nodejs
         run: make sdk_nodejs VERSION=${{ needs.version.outputs.version }}
 
+      - name: Build SDK - dotnet
+        run: make sdk_dotnet VERSION=${{ needs.version.outputs.version }}
+
       - name: Publish SDK - go
         run: |
           cd pulumi-sdk-neon
@@ -131,3 +134,10 @@ jobs:
           npm publish --provenance --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish SDK - dotnet
+        run: |
+          cd "${{ github.workspace }}/sdk-dotnet/bin/Debug/"
+          dotnet nuget push "*.nupkg" -k "${NUGET_PUBLISH_KEY}" -s https://api.nuget.org/v3/index.json --skip-duplicate
+        env:
+          NUGET_PUBLISH_KEY: ${{ secrets.NUGET_PUBLISH_KEY }}

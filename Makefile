@@ -82,10 +82,12 @@ sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/READ
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist 2>/dev/null
 
-dotnet_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates .Net SDK.
+sdk_dotnet:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates .Net SDK.
+	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 	@ rm -rf sdk-dotnet
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-dotnet --language dotnet
-	@ cd sdk-dotnet/dotnet/&& \
+	@ cp fig/logo.png sdk-dotnet/dotnet/ && mv sdk-dotnet/dotnet/* sdk-dotnet && rm -r sdk-dotnet/dotnet
+	@ cd sdk-dotnet/ && \
 		echo "${VERSION_SET}" >version.txt && \
 		dotnet build /p:Version=${VERSION_SET}
 

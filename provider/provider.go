@@ -48,7 +48,7 @@ func Provider() p.Provider {
 			Repository:        "https://" + repository,
 			Publisher:         "Dmitry Kisler",
 			PluginDownloadURL: "https://" + repository + "/releases/download/v${VERSION}",
-			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
+			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.png",
 			License:           "Apache-2.0",
 			LanguageMap: map[string]any{
 				"go": goGen.GoPackageInfo{
@@ -74,10 +74,13 @@ func Provider() p.Provider {
 					RespectSchemaVersion:         true,
 				},
 				"csharp": csharpGen.CSharpPackageInfo{
-					RespectSchemaVersion: true,
 					PackageReferences: map[string]string{
 						"Pulumi": "3.*",
 					},
+					DictionaryConstructors:       false,
+					LiftSingleValueMethodReturns: true,
+					RootNamespace:                "PulumiSdk",
+					RespectSchemaVersion:         true,
 				},
 			},
 		},
@@ -86,7 +89,7 @@ func Provider() p.Provider {
 		},
 		Config: infer.Config[*Config](),
 		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
-			"neon": "index",
+			"provider": "resource",
 		},
 	})
 

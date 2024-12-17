@@ -76,8 +76,15 @@ jobs:
       - run: make provider
         name: Build provider
 
+      - name: Configure git
+        run: |
+          git config --global user.email "admin@dkisler.com"
+          git config --global user.name "Dmitry Kisler"
+
       - name: Build SDK - go
         run: make sdk_go
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup python
         uses: actions/setup-python@v5
@@ -98,9 +105,6 @@ jobs:
 
       - name: Publish SDK - go
         run: |
-          git config --global user.email "admin@dkisler.com"
-          git config --global user.name "Dmitry Kisler"
-          
           cd pulumi-sdk-neon
           git checkout master
           git add .

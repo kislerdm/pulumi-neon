@@ -49,6 +49,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+          submodules: 'recursive'
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'

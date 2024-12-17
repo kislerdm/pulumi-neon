@@ -62,14 +62,16 @@ sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/nodejs/READ
 		cp ../../LICENSE package.json package-lock.json bin/ && \
 		sed -i.bak 's/$${VERSION_SET}/$(VERSION_SET)/g' bin/package.json && \
 		rm ./bin/package.json.bak
+	@ mv sdk-nodejs/nodejs/bin/* sdk-nodejs/ && rm -r sdk-nodejs/nodejs
 
 sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates python SDK.
 	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 	@ rm -rf sdk-python
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-python --language python
-	@ cp sdk-template/python/README.md sdk-python/python/README.md && \
- 		cp LICENSE sdk-python/python/$(PY_PKG_NAME)/
-	@ cd sdk-python/python && \
+	@ mv sdk-python/python/* sdk-python/ && rm -r sdk-python/python
+	@ cp sdk-template/python/README.md sdk-python/README.md && \
+ 		cp LICENSE sdk-python/$(PY_PKG_NAME)/
+	@ cd sdk-python && \
 		python3 -m venv .venv && source .venv/bin/activate && pip install setuptools 2>&1 > /dev/null && \
 		python3 setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \

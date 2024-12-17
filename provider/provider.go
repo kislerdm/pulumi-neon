@@ -62,7 +62,7 @@ func Provider() p.Provider {
 					RespectSchemaVersion:           true,
 				},
 				"nodejs": nodejsGen.NodePackageInfo{
-					PackageName:                  "@dkisler/neon",
+					PackageName:                  "@dkisler/pulumi-neon",
 					LiftSingleValueMethodReturns: true,
 					RespectSchemaVersion:         true,
 				},

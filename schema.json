@@ -35,7 +35,7 @@
       "respectSchemaVersion": true
     },
     "nodejs": {
-      "packageName": "@dkisler/neon",
+      "packageName": "@dkisler/pulumi-neon",
       "liftSingleValueMethodReturns": true,
       "respectSchemaVersion": true
     },

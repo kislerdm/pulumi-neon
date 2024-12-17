@@ -43,10 +43,13 @@ lint:: ## Lints the provider's codebase.
 verify_version:: ## Checks that the schema version corresponds to release version.
 	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 
-sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
-	@ rm -rf $(WORKING_DIR)/$(GO_SDK)
+sdk_go.local:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
 	@ git submodule update --depth 1 --init --recursive --remote -f
-	@ cp -r sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp LICENSE $(WORKING_DIR)/$(GO_SDK)/
+	@ make sdk_go.ci
+
+sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
+	@ rm -rf $(WORKING_DIR)/$(GO_SDK)/*
+	@ cp -rf sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp -f LICENSE $(WORKING_DIR)/$(GO_SDK)/
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o $(WORKING_DIR)/$(GO_SDK) --language go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && mv go/$(GO_SDK)/* . && rm -r go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy

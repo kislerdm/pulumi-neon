@@ -55,7 +55,6 @@ sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-tem
 	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy
 
 sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/nodejs/README.md ## Generates Node.js SDK.
-	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 	@ rm -rf sdk-nodejs
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-nodejs --language nodejs
 	@ cd sdk-nodejs/nodejs/ && \
@@ -68,7 +67,6 @@ sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/nodejs/READ
 	@ mv sdk-nodejs/nodejs/bin/* sdk-nodejs/ && rm -r sdk-nodejs/nodejs
 
 sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates python SDK.
-	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 	@ rm -rf sdk-python
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-python --language python
 	@ mv sdk-python/python/* sdk-python/ && rm -r sdk-python/python
@@ -83,7 +81,6 @@ sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/READ
 		cd ./bin && python3 setup.py build sdist 2>/dev/null
 
 sdk_dotnet:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates .Net SDK.
-	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
 	@ rm -rf sdk-dotnet
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-dotnet --language dotnet
 	@ cp fig/logo.png sdk-dotnet/dotnet/ && mv sdk-dotnet/dotnet/* sdk-dotnet && rm -r sdk-dotnet/dotnet

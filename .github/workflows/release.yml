@@ -26,36 +26,37 @@ jobs:
           fetch-depth: '1'
       - run: make verify_version VERSION=${{ needs.version.outputs.version }}
 
-  release-provider:
-    runs-on: ubuntu-24.04
-    needs: verify-schema
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache-dependency-path: 'go.sum'
-          cache: true
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        id: import_gpg
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
-      - name: Release provider
-        uses: goreleaser/goreleaser-action@v6.1.0
-        with:
-          version: '~> v2'
-          args: release --clean
-        env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#  release-provider:
+#    runs-on: ubuntu-24.04
+#    needs: verify-schema
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: '1'
+#      - uses: actions/setup-go@v5
+#        with:
+#          go-version-file: 'go.mod'
+#          cache-dependency-path: 'go.sum'
+#          cache: true
+#      - name: Import GPG key
+#        uses: crazy-max/ghaction-import-gpg@v6
+#        id: import_gpg
+#        with:
+#          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+#          passphrase: ${{ secrets.PASSPHRASE }}
+#      - name: Release provider
+#        uses: goreleaser/goreleaser-action@v6.1.0
+#        with:
+#          version: '~> v2'
+#          args: release --clean
+#        env:
+#          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-sdks:
     runs-on: ubuntu-24.04
     needs:
+      - version
       - verify-schema
     permissions:
       id-token: write
@@ -99,6 +100,8 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Build SDK - nodejs
         run: make sdk_nodejs VERSION=${{ needs.version.outputs.version }}

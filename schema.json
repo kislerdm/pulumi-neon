@@ -11,7 +11,7 @@
   "homepage": "https://github.com/kislerdm/pulumi-neon",
   "license": "Apache-2.0",
   "repository": "https://github.com/kislerdm/pulumi-neon",
-  "logoUrl": "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg",
+  "logoUrl": "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/master/fig/logo.png",
   "pluginDownloadURL": "https://github.com/kislerdm/pulumi-neon/releases/download/v${VERSION}",
   "publisher": "Dmitry Kisler",
   "meta": {

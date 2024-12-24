@@ -80,14 +80,18 @@ sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/READ
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist 2>/dev/null
 
-sdk_dotnet:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates .Net SDK.
+sdk_dotnet:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/dotnet/README.md ## Generates .Net SDK.
 	@ rm -rf sdk-dotnet
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-dotnet --language dotnet
 	@ cp fig/logo.png sdk-dotnet/dotnet/ && mv sdk-dotnet/dotnet/* sdk-dotnet && rm -r sdk-dotnet/dotnet
+	@ cp sdk-template/dotnet/README.md sdk-dotnet/README.md
+	@ cp sdk-template/dotnet/README.md sdk-dotnet/Config/README.md
 	@ cd sdk-dotnet/ && \
 		echo "${VERSION_SET}" >version.txt && \
 		dotnet build /p:Version=${VERSION_SET}
 
-java_sdk:: $(WORKING_DIR)/bin/$(PROVIDER) ## Generates Go SDK.
+sdk_java:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/java/README.md ## Generates Java SDK.
 	@ rm -rf sdk-java
 	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-java --language java
+	@ cd sdk-java && mv java/* . && rm -r java
+	@ cp -r sdk-template/java/* sdk-java/

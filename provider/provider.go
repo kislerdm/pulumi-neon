@@ -48,7 +48,7 @@ func Provider() p.Provider {
 			Repository:        "https://" + repository,
 			Publisher:         "Dmitry Kisler",
 			PluginDownloadURL: "https://" + repository + "/releases/download/v${VERSION}",
-			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.png",
+			LogoURL:           "https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/master/fig/logo.png",
 			License:           "Apache-2.0",
 			LanguageMap: map[string]any{
 				"go": goGen.GoPackageInfo{

@@ -6,7 +6,7 @@ layout: package
 
 # Neon provider
 
-![logo](https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg)
+![logo](https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/master/fig/logo.png)
 
 The Pulumi provider to manage [Neon Platform](https://neon.tech/home) resources.
 

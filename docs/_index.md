@@ -28,7 +28,7 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 5. Export the token as the environment variable `NEON_API_KEY`.
 6. (Optionally) Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
 
-## How to provision a Neon Project
+## Example: how to provision a Neon Project
 
 **Prerequisite:** the [configuration steps](#how-to-configure-the-provider) above are completed.
 
@@ -54,7 +54,7 @@ import (
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		_, err := resource.NewProject(ctx, "myproject", &provider.ProjectArgs{
+		_, err := resource.NewProject(ctx, "myproject", &resource.ProjectArgs{
 			Name: pulumi.String("myproject"),
 		}, pulumi.Protect(true))
 		if err != nil {

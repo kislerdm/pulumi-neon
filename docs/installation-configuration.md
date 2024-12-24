@@ -6,7 +6,7 @@ layout: package
 
 # Neon provider
 
-![logo](https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/main/fig/logo.svg)
+![logo](https://raw.githubusercontent.com/kislerdm/pulumi-neon/refs/heads/master/fig/logo.png)
 
 The Pulumi provider to manage [Neon Platform](https://neon.tech/home) resources.
 
@@ -15,19 +15,32 @@ The Pulumi provider to manage [Neon Platform](https://neon.tech/home) resources.
 
 Find more about Neon [here](https://neon.tech/docs/introduction).
 
+## Table of Contents
+
+* [How to configure the provider](#how-to-configure-the-provider)
+* [Example: how to provision a Neon Project](#example-how-to-provision-a-neon-project)
+   + [Go](#go)
+   + [Typescript](#typescript)
+   + [Python](#python)
+   + [C#](#c)
+   + [YAML](#yaml)
+
 ## How to configure the provider
 
-1. Initiate a Pulumi project by running `pulumi new`.
-2. Select the `template` in the dropdown.
-3. Select one of the technologies supported by the provider:
+1. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
+2. Export the token as the environment variable `NEON_API_KEY`.
+3. Initiate a Pulumi project by running `pulumi new`.
+4. Select the `template` in the dropdown.
+5. Select one of the technologies supported by the provider:
     - `go`
-    - `python`
     - `typescript`
-4. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
-5. Export the token as the environment variable `NEON_API_KEY`.
-6. (Optionally) Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+    - `python`
+    - `csharp`
+    - `yaml`
+6. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+7. Install the plugin by running ``
 
-## How to provision a Neon Project
+## Example: how to provision a Neon Project
 
 **Prerequisite:** the [configuration steps](#how-to-configure-the-provider) above are completed.
 
@@ -36,7 +49,7 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 1. Add the SDK as dependency:
 
 ```shell
-go get "github.com/kislerdm/pulumi-neon/sdk"
+go get "github.com/kislerdm/pulumi-sdk-neon"
 ```
 
 2. Edit the file `main.go`:
@@ -47,13 +60,13 @@ package main
 import (
 	"log"
 
-	"github.com/kislerdm/pulumi-neon/sdk/go/neon/provider"
+	"github.com/kislerdm/pulumi-sdk-neon/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		_, err := provider.NewProject(ctx, "myproject", &provider.ProjectArgs{
+		_, err := resource.NewProject(ctx, "myproject", &resource.ProjectArgs{
 			Name: pulumi.String("myproject"),
 		}, pulumi.Protect(true))
 		if err != nil {
@@ -110,3 +123,47 @@ Project("myproject", ProjectArgs(name="myproject"))
 
 4. Run `pulumi up -f`
 5. Examine the Neon console: it's expected to see a new project there.
+
+### C#
+
+1. Add the SDK as dependency:
+
+```commandline
+dotnet add package PulumiSdk.Neon
+```
+
+2. Edit the file `Program.cs`:
+
+```csharp
+using Pulumi;
+using PulumiSdk.Neon.Resource;
+
+return await Deployment.RunAsync(() =>
+{
+    var project = new Project("myproject", new ProjectArgs
+    {
+        Name = "myproject",
+    });
+});
+```
+
+3. Run `pulumi up -f`
+4. Examine the Neon console: it's expected to see a new project there.
+
+### YAML
+
+1. Edit the file `Pulumi.yaml` so it looks like this snippet:
+
+```yaml
+name: ##your project name##
+runtime: yaml
+description: ##your project description##
+resources:
+  project:
+    type: neon:resource:Project
+    properties:
+      name: myproject
+```
+
+2. Run `pulumi up -f`
+3. Examine the Neon console: it's expected to see a new project there.

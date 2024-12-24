@@ -15,6 +15,16 @@ The Pulumi provider to manage [Neon Platform](https://neon.tech/home) resources.
 
 Find more about Neon [here](https://neon.tech/docs/introduction).
 
+## Table of Contents
+
+* [How to configure the provider](#how-to-configure-the-provider)
+* [Example: how to provision a Neon Project](#example-how-to-provision-a-neon-project)
+   + [Go](#go)
+   + [Typescript](#typescript)
+   + [Python](#python)
+   + [C#](#c)
+   + [YAML](#yaml)
+
 ## How to configure the provider
 
 1. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
@@ -26,7 +36,6 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
     - `typescript`
     - `python`
     - `csharp`
-    - `java`
     - `yaml`
 6. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
 7. Install the plugin by running ``

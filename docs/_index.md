@@ -37,7 +37,7 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 1. Add the SDK as dependency:
 
 ```shell
-go get "github.com/kislerdm/pulumi-neon/sdk"
+go get "github.com/kislerdm/pulumi-sdk-neon"
 ```
 
 2. Edit the file `main.go`:
@@ -48,13 +48,13 @@ package main
 import (
 	"log"
 
-	"github.com/kislerdm/pulumi-neon/sdk/go/neon/provider"
+	"github.com/kislerdm/pulumi-sdk-neon/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		_, err := provider.NewProject(ctx, "myproject", &provider.ProjectArgs{
+		_, err := resource.NewProject(ctx, "myproject", &provider.ProjectArgs{
 			Name: pulumi.String("myproject"),
 		}, pulumi.Protect(true))
 		if err != nil {

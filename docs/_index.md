@@ -23,6 +23,7 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
     - `go`
     - `python`
     - `typescript`
+    - `csharp`
 4. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
 5. Export the token as the environment variable `NEON_API_KEY`.
 6. (Optionally) Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
@@ -110,3 +111,29 @@ Project("myproject", ProjectArgs(name="myproject"))
 
 4. Run `pulumi up -f`
 5. Examine the Neon console: it's expected to see a new project there.
+
+### C#
+
+1. Add the SDK as dependency:
+
+```commandline
+dotnet add package PulumiSdk.Neon
+```
+
+2. Edit the file `Program.cs`:
+
+```csharp
+using Pulumi;
+using PulumiSdk.Neon.Resource;
+
+return await Deployment.RunAsync(() =>
+{
+    var project = new Project("myproject", new ProjectArgs
+    {
+        Name = "myproject",
+    });
+});
+```
+
+3. Run `pulumi up -f`
+4. Examine the Neon console: it's expected to see a new project there.

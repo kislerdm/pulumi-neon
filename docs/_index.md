@@ -17,16 +17,19 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 
 ## How to configure the provider
 
-1. Initiate a Pulumi project by running `pulumi new`.
-2. Select the `template` in the dropdown.
-3. Select one of the technologies supported by the provider:
+1. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
+2. Export the token as the environment variable `NEON_API_KEY`.
+3. Initiate a Pulumi project by running `pulumi new`.
+4. Select the `template` in the dropdown.
+5. Select one of the technologies supported by the provider:
     - `go`
-    - `python`
     - `typescript`
+    - `python`
     - `csharp`
-4. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
-5. Export the token as the environment variable `NEON_API_KEY`.
-6. (Optionally) Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+    - `java`
+    - `yaml`
+6. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+7. Install the plugin by running ``
 
 ## Example: how to provision a Neon Project
 
@@ -137,3 +140,21 @@ return await Deployment.RunAsync(() =>
 
 3. Run `pulumi up -f`
 4. Examine the Neon console: it's expected to see a new project there.
+
+### YAML
+
+1. Edit the file `Pulumi.yaml` so it looks like this snippet:
+
+```yaml
+name: ##your project name##
+runtime: yaml
+description: ##your project description##
+resources:
+  project:
+    type: neon:resource:Project
+    properties:
+      name: myproject
+```
+
+2. Run `pulumi up -f`
+3. Examine the Neon console: it's expected to see a new project there.

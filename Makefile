@@ -12,7 +12,7 @@ PROVIDER        := pulumi-resource-${PACK}
 
 VERSION 		:=
 VERSION_SET     ?= $(if $(VERSION),$(VERSION),$(shell pulumictl get version))
-VERSION_PY      ?= $(if $(VERSION),$(VERSION),$(shell pulumictl get version --language python))
+VERSION_SDK 	:= $(shell jq '.version' schema.json | sed 's/"//g')
 
 .PHONY: help
 help: ## Prints help message.
@@ -27,7 +27,7 @@ gen_schema:: ## Generates schema.json.
 	@ pulumi package get-schema bin/$(PROVIDER) > schema.json
 
 read_version:: ## Reads plugin version from schema.
-	@ jq '.version' schema.json
+	@ jq '.version' schema.json | sed 's/"//g'
 
 tests:: ## Runs unit tests.
 	cd provider && go test -short -v -count=1 -cover -timeout 30m -parallel 1 ./...
@@ -62,7 +62,7 @@ sdk_nodejs:: schema.json sdk-template/nodejs/README.md ## Generates Node.js SDK.
 		npm run build && \
 		cp ../../sdk-template/nodejs/README.md bin/README.md && \
 		cp ../../LICENSE package.json package-lock.json bin/ && \
-		sed -i.bak 's/$${VERSION_SET}/$(VERSION_SET)/g' bin/package.json && \
+		sed -i.bak 's/$${VERSION_SDK}/$(VERSION_SDK)/g' bin/package.json && \
 		rm ./bin/package.json.bak
 	@ mv sdk-nodejs/nodejs/bin/* sdk-nodejs/ && rm -r sdk-nodejs/nodejs
 
@@ -76,7 +76,7 @@ sdk_python:: schema.json sdk-template/python/README.md ## Generates python SDK.
 		python3 -m venv .venv && source .venv/bin/activate && pip install setuptools 2>&1 > /dev/null && \
 		python3 setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \
-		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION_PY)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION_PY)"/g' ./bin/setup.py && \
+		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION_SDK)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION_SDK)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist 2>/dev/null
 
@@ -84,11 +84,10 @@ sdk_dotnet:: schema.json sdk-template/dotnet/README.md ## Generates .Net SDK.
 	@ rm -rf sdk-dotnet
 	@ pulumi package gen-sdk schema.json -o sdk-dotnet --language dotnet
 	@ cp fig/logo.png sdk-dotnet/dotnet/ && mv sdk-dotnet/dotnet/* sdk-dotnet && rm -r sdk-dotnet/dotnet
-	@ cd sdk-dotnet/ && \
-		echo "${VERSION_SET}" >version.txt
+	@ echo $(VERSION_SDK) > sdk-dotnet/version.txt
 	@ cp sdk-template/dotnet/README.md sdk-dotnet/README.md && \
 		cd sdk-dotnet && sed -i '' -e 's|</Project>|  <PropertyGroup>\n    <PackageReadmeFile>README.md</PackageReadmeFile>\n  </PropertyGroup>\n  <ItemGroup>\n    <None Include="README.md" Pack="True" PackagePath="/" />\n  </ItemGroup>\n</Project>|g' *.csproj
-	@ cd sdk-dotnet && dotnet build /p:Version=${VERSION_SET}
+	@ cd sdk-dotnet && dotnet build --verbosity minimal 1>/dev/null
 
 sdk_java:: schema.json sdk-template/java/README.md sdk-template/java/build.gradle sdk-template/java/settings.gradle ## Generates Java SDK.
 	@ rm -rf sdk-java

@@ -47,16 +47,16 @@ sdk_go.local:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* s
 	@ git submodule update --depth 1 --init --recursive --remote -f
 	@ make sdk_go.ci
 
-sdk_go:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
+sdk_go:: schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
 	@ rm -rf $(WORKING_DIR)/$(GO_SDK)/*
 	@ cp -rf sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp -f LICENSE $(WORKING_DIR)/$(GO_SDK)/
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o $(WORKING_DIR)/$(GO_SDK) --language go
+	@ pulumi package gen-sdk schema.json -o $(WORKING_DIR)/$(GO_SDK) --language go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && mv go/$(GO_SDK)/* . && rm -r go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy
 
-sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/nodejs/README.md ## Generates Node.js SDK.
+sdk_nodejs:: schema.json sdk-template/nodejs/README.md ## Generates Node.js SDK.
 	@ rm -rf sdk-nodejs
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-nodejs --language nodejs
+	@ pulumi package gen-sdk schema.json -o sdk-nodejs --language nodejs
 	@ cd sdk-nodejs/nodejs/ && \
 		npm install && \
 		npm run build && \
@@ -66,9 +66,9 @@ sdk_nodejs:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/nodejs/READ
 		rm ./bin/package.json.bak
 	@ mv sdk-nodejs/nodejs/bin/* sdk-nodejs/ && rm -r sdk-nodejs/nodejs
 
-sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/README.md ## Generates python SDK.
+sdk_python:: schema.json sdk-template/python/README.md ## Generates python SDK.
 	@ rm -rf sdk-python
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-python --language python
+	@ pulumi package gen-sdk schema.json -o sdk-python --language python
 	@ mv sdk-python/python/* sdk-python/ && rm -r sdk-python/python
 	@ cp sdk-template/python/README.md sdk-python/README.md && \
  		cp LICENSE sdk-python/$(PY_PKG_NAME)/
@@ -80,18 +80,21 @@ sdk_python:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/python/READ
 		rm ./bin/setup.py.bak && \
 		cd ./bin && python3 setup.py build sdist 2>/dev/null
 
-sdk_dotnet:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/dotnet/README.md ## Generates .Net SDK.
+sdk_dotnet:: schema.json sdk-template/dotnet/README.md ## Generates .Net SDK.
 	@ rm -rf sdk-dotnet
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-dotnet --language dotnet
+	@ pulumi package gen-sdk schema.json -o sdk-dotnet --language dotnet
 	@ cp fig/logo.png sdk-dotnet/dotnet/ && mv sdk-dotnet/dotnet/* sdk-dotnet && rm -r sdk-dotnet/dotnet
-	@ cp sdk-template/dotnet/README.md sdk-dotnet/README.md
-	@ cp sdk-template/dotnet/README.md sdk-dotnet/Config/README.md
 	@ cd sdk-dotnet/ && \
-		echo "${VERSION_SET}" >version.txt && \
-		dotnet build /p:Version=${VERSION_SET}
+		echo "${VERSION_SET}" >version.txt
+	@ cp sdk-template/dotnet/README.md sdk-dotnet/README.md && \
+		cd sdk-dotnet && sed -i '' -e 's|</Project>|  <PropertyGroup>\n    <PackageReadmeFile>README.md</PackageReadmeFile>\n  </PropertyGroup>\n  <ItemGroup>\n    <None Include="README.md" Pack="True" PackagePath="/" />\n  </ItemGroup>\n</Project>|g' *.csproj
+	@ cd sdk-dotnet && dotnet build /p:Version=${VERSION_SET}
 
-sdk_java:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/java/README.md ## Generates Java SDK.
+sdk_java:: schema.json sdk-template/java/README.md sdk-template/java/build.gradle sdk-template/java/settings.gradle ## Generates Java SDK.
 	@ rm -rf sdk-java
-	@ pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) -o sdk-java --language java
+	@ pulumi package gen-sdk schema.json -o sdk-java --language java
 	@ cd sdk-java && mv java/* . && rm -r java
 	@ cp -r sdk-template/java/* sdk-java/
+	@ # fix for https://github.com/pulumi/pulumi-java/issues/1534
+	@ cd sdk-java/src && find . -type f -name '*.java' | xargs sed -i '' -e 's/import javax.annotation/import jakarta.annotation/g'
+	@ cd sdk-java && gradle build

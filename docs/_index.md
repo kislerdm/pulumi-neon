@@ -19,26 +19,31 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 
 * [How to configure the provider](#how-to-configure-the-provider)
 * [Example: how to provision a Neon Project](#example-how-to-provision-a-neon-project)
-   + [Go](#go)
-   + [Typescript](#typescript)
-   + [Python](#python)
-   + [C#](#c)
-   + [YAML](#yaml)
+    + [Go](#go)
+    + [Typescript](#typescript)
+    + [Python](#python)
+    + [C#](#c)
+    + [Java](#java)
+    + [YAML](#yaml)
 
 ## How to configure the provider
+
+**Prerequisite:**
+
+- Pulumi v3.134.1+
 
 1. Sign up for Neon and [create an API token](https://api-docs.neon.tech/reference/authentication#neon-api-keys).
 2. Export the token as the environment variable `NEON_API_KEY`.
 3. Initiate a Pulumi project by running `pulumi new`.
 4. Select the `template` in the dropdown.
-5. Select one of the technologies supported by the provider:
+5. Select one of the supported technologies:
     - `go`
     - `typescript`
     - `python`
     - `csharp`
+    - `java-gradle` (note that the use `gradle` is a recommended way to build a java project)
     - `yaml`
 6. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
-7. Install the plugin by running ``
 
 ## Example: how to provision a Neon Project
 
@@ -126,13 +131,20 @@ Project("myproject", ProjectArgs(name="myproject"))
 
 ### C#
 
-1. Add the SDK as dependency:
+**Prerequisites**:
+
+- dotnet 6+.
+- [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
+
+1. Create a pulumi project by running `pulumi new csharp`
+2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+3. Add the SDK as dependency:
 
 ```commandline
 dotnet add package PulumiSdk.Neon
 ```
 
-2. Edit the file `Program.cs`:
+4. Edit the file `Program.cs`:
 
 ```csharp
 using Pulumi;
@@ -140,15 +152,78 @@ using PulumiSdk.Neon.Resource;
 
 return await Deployment.RunAsync(() =>
 {
-    var project = new Project("myproject", new ProjectArgs
+    new Project("myproject", new ProjectArgs
     {
-        Name = "myproject",
+        Name = "myProjectProvisionedWithPulumiDotnetSDK",
     });
 });
 ```
 
-3. Run `pulumi up -f`
-4. Examine the Neon console: it's expected to see a new project there.
+5. (Optionally) Edit the project configuration to match the .Net version of your environment:
+
+```xml
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <!-- Configure your .Ner version here -->
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Pulumi" Version="3.*"/>
+        <PackageReference Include="PulumiSdk.Neon" Version="0.*"/>
+    </ItemGroup>
+
+</Project>
+```
+
+6. Run `pulumi up -f`
+7. Examine the Neon console: it's expected to see a new project called "myProjectProvisionedWithPulumiDotnetSDK".
+
+### Java
+
+**Prerequisites**:
+
+- Java 11+.
+- Gradle >=8.12, <9.0.
+- [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
+
+1. Create a pulumi project by running `pulumi new java-gradle`
+2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+3. Add the SDK as dependency to the dependencies in the file `app/build.gradle`:
+
+```gradle
+dependencies {
+    implementation ('com.pulumi:pulumi:(,1.0]')
+    implementation ('com.pulumi:neon:(,1.0)')
+}
+```
+
+4. Add the project configuration to the file `App.java`:
+
+```java
+package myproject;
+
+import com.pulumi.Pulumi;
+import com.pulumi.neon.resource.Project;
+import com.pulumi.neon.resource.ProjectArgs;
+
+public class App {
+    public static void main(String[] args) {
+        Pulumi.run(_ -> {
+           new Project("myproject", ProjectArgs.builder()
+                            .name("myProjectProvisionedWithPulumiJavaSDK")
+                            .build());
+        });
+    }
+}
+```
+
+5. Run `pulumi up -f`
+6. Examine the Neon console: it's expected to see a new project called "myProjectProvisionedWithPulumiJavaSDK".
 
 ### YAML
 
@@ -162,8 +237,8 @@ resources:
   project:
     type: neon:resource:Project
     properties:
-      name: myproject
+      name: myProjectProvisionedWithPulumiYamlSDK
 ```
 
 2. Run `pulumi up -f`
-3. Examine the Neon console: it's expected to see a new project there.
+6. Examine the Neon console: it's expected to see a new project called "myProjectProvisionedWithPulumiYamlSDK".

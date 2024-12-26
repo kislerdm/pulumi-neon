@@ -1,0 +1,7 @@
+name: project
+runtime: java
+description: An example how to provision a Neon project using Java.
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: java-gradle

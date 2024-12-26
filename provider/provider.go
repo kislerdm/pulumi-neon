@@ -24,6 +24,7 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi-go-provider/middleware/schema"
+	javaGen "github.com/pulumi/pulumi-java/pkg/codegen/java"
 	csharpGen "github.com/pulumi/pulumi/pkg/v3/codegen/dotnet"
 	goGen "github.com/pulumi/pulumi/pkg/v3/codegen/go"
 	nodejsGen "github.com/pulumi/pulumi/pkg/v3/codegen/nodejs"
@@ -77,10 +78,17 @@ func Provider() p.Provider {
 					PackageReferences: map[string]string{
 						"Pulumi": "3.*",
 					},
+					Compatibility:                "",
 					DictionaryConstructors:       false,
 					LiftSingleValueMethodReturns: true,
 					RootNamespace:                "PulumiSdk",
 					RespectSchemaVersion:         true,
+				},
+				"java": javaGen.PackageInfo{
+					BuildFiles: "gradle",
+					Dependencies: map[string]string{
+						"com.pulumi:pulumi": "(0,1.0]",
+					},
 				},
 			},
 		},

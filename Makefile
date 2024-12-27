@@ -40,7 +40,6 @@ lint:: ## Lints the provider's codebase.
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 
-
 verify_version:: VERSION_PROVIDER := $(shell jq '.version' schema.json)
 verify_version:: ## Checks that the schema version corresponds to release version.
 	@ if [ "$(VERSION_PROVIDER)" != $(VERSION_SET) ]; then echo inconsistent version: schema.json - $(VERSION_PROVIDER), variable - $(VERSION_SET) && exit 1; fi
@@ -54,7 +53,15 @@ sdk_go:: schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates
 	@ cp -rf sdk-template/go/* $(WORKING_DIR)/$(GO_SDK)/ && cp -f LICENSE $(WORKING_DIR)/$(GO_SDK)/
 	@ pulumi package gen-sdk schema.json -o $(WORKING_DIR)/$(GO_SDK) --language go
 	@ cd $(WORKING_DIR)/$(GO_SDK) && mv go/$(GO_SDK)/* . && rm -r go
-	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy
+
+sdk_go.publish:: VERSION_SET := $(shell jq '.version' $(WORKING_DIR)/$(GO_SDK)/pulumi-plugin.json | sed 's/"//g')
+sdk_go.publish:: verify_version ## Publishes Go SDK to github.
+	@ cd $(WORKING_DIR)/$(GO_SDK) && \
+ 		git add --all . && \
+ 		git commit -S -m "release v$(VERSION_SET)" && \
+ 		git push origin master -f && \
+ 		git tag v$(VERSION_SET) && \
+ 		git push origin v$(VERSION_SET)
 
 sdk_nodejs:: schema.json sdk-template/nodejs/README.md ## Generates Node.js SDK.
 	@ rm -rf sdk/nodejs

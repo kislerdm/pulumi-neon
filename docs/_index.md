@@ -87,22 +87,29 @@ func main() {
 
 ### Typescript
 
-1. Add the SDK as dependency:
+**Prerequisites**:
+
+- nodejs 18+.
+- [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
+
+1. Create a pulumi project by running `pulumi new typescript`
+2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+3. Add the SDK as dependency:
 
 ```shell
-npm install "@pulumi/neon"
+npm install "@dkisler/pulumi-neon"
 ```
 
-2. Edit the file `index.ts`:
+4. Edit the file `index.ts`:
 
 ```typescript
-import {Project, ProjectArgs} from "@pulumi/neon/provider/project";
+import {Project, ProjectArgs} from "@dkisler/pulumi-neon/resource/project";
 
-new Project("myproject", {name: "myproject"} as ProjectArgs);
+new Project("myproject", {name: "myProjectProvisionedWithPulumiNodejsSDK"} as ProjectArgs);
 ```
 
-3. Run `pulumi up -f`
-4. Examine the Neon console: it's expected to see a new project there.
+5. Run `pulumi up -f`
+6. Examine the Neon console: it's expected to see a new project called "myProjectProvisionedWithPulumiNodejsSDK".
 
 ### Python
 

@@ -1,0 +1,12 @@
+{
+    "name": "project",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@dkisler/pulumi-neon": "^0.0.1-beta.1",
+        "@pulumi/pulumi": "^3.113.0"
+    }
+}

@@ -80,7 +80,7 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		_, err := resource.NewProject(ctx, "myproject", &resource.ProjectArgs{
 			Name: pulumi.String("myProjectProvisionedWithPulumiGoSDK"),
-		}, pulumi.Protect(true))
+		})
 		if err != nil {
 			log.Println(err)
 		}

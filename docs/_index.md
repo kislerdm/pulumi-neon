@@ -120,28 +120,38 @@ new Project("myproject", {name: "myProjectProvisionedWithPulumiNodejsSDK"} as Pr
 
 ### Python
 
-1. Active venv:
+### Prerequisites
+
+- Pulumi v3.134.1+
+- Python 3.9+
+- [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`
+
+### Steps
+
+1. Create a Pulumi project by running `pulumi new python`
+2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+3. Active venv:
 
 ```shell
 source venv/bin/activate
 ```
 
-2. Add the SDK as dependency:
+4. Add the SDK as dependency:
 
 ```shell
 pip install pulumi_neon
 ```
 
-3. Edit the file `__main__.py`:
+5. Edit the file `__main__.py`:
 
 ```python
-from pulumi_neon.provider.project import Project, ProjectArgs
+from pulumi_neon.resource.project import Project, ProjectArgs
 
-Project("myproject", ProjectArgs(name="myproject"))
+Project("myproject", ProjectArgs(name="myProjectProvisionedWithPulumiPythonSDK"))
 ```
 
-4. Run `pulumi up -f`
-5. Examine the Neon console: it's expected to see a new project there.
+6. Run `pulumi up -f`
+7. Examine the Neon console: it's expected to see a new project called "myProjectProvisionedWithPulumiPythonSDK".
 
 ### C#
 

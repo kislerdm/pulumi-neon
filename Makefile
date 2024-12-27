@@ -82,18 +82,25 @@ sdk_nodejs.publish:: verify_version ## Publishes Node.js SDK to npm.
  		if [ -z "${GITHUB_ACTION}" ]; then npm publish --access public; else npm publish --access public --provenance; fi
 
 sdk_python:: schema.json sdk-template/python/README.md ## Generates python SDK.
-	@ rm -rf sdk-python
-	@ pulumi package gen-sdk schema.json -o sdk-python --language python
-	@ mv sdk-python/python/* sdk-python/ && rm -r sdk-python/python
-	@ cp sdk-template/python/README.md sdk-python/README.md && \
- 		cp LICENSE sdk-python/$(PY_PKG_NAME)/
-	@ cd sdk-python && \
-		python3 -m venv .venv && source .venv/bin/activate && pip install setuptools 2>&1 > /dev/null && \
-		python3 setup.py clean --all 2>/dev/null && \
+	@ rm -rf sdk/python
+	@ pulumi package gen-sdk schema.json --language python
+	@ cp sdk-template/python/README.md sdk/python/README.md && cp LICENSE sdk-python/$(PY_PKG_NAME)/
+
+sdk_python.build:: VERSION_SET := $(shell jq '.version' $(WORKING_DIR)/sdk/python/$(PY_PKG_NAME)/pulumi-plugin.json | sed 's/"//g')
+sdk_python.build:: verify_version ## Builds python SDK dist.
+	@ cd sdk/python && \
+		python3 -m venv .venv && source .venv/bin/activate && pip install setuptools 1> /dev/null && \
+		python3 setup.py clean --all 1>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \
-		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION_SDK)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION_SDK)"/g' ./bin/setup.py && \
+		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(VERSION_SET)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION_SET)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
-		cd ./bin && python3 setup.py build sdist 2>/dev/null
+		cd ./bin && python3 setup.py build sdist 1>/dev/null
+
+sdk_python.publish:: $(WORKING_DIR)/sdk/python/bin/dist/*.tar.gz  ## Publishes python SDK to PyPi.
+	@ if [ -z "${PYPI_TOKEN}" ]; then echo "PYPI_TOKEN env variable must be set"; exit 1; fi
+	@ cd sdk/python && \
+      	python3 -m venv .venv && source .venv/bin/activate && pip install twine && \
+      	twine upload -u "__token__" -p "${PYPI_TOKEN}" $(WORKING_DIR)/sdk/python/bin/dist/* --skip-existing --verbose
 
 sdk_dotnet:: schema.json sdk-template/dotnet/README.md ## Generates .Net SDK.
 	@ rm -rf sdk-dotnet

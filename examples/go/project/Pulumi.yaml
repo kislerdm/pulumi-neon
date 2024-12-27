@@ -1,0 +1,7 @@
+name: project
+description: An example how to provision a Neon project using Go.
+runtime: go
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: go

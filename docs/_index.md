@@ -51,13 +51,20 @@ Find more about Neon [here](https://neon.tech/docs/introduction).
 
 ### Go
 
-1. Add the SDK as dependency:
+**Prerequisites**:
+
+- Go 1.21+.
+- [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
+
+1. Create a Pulumi project by running `pulumi new go`
+2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
+3. Add the SDK as dependency:
 
 ```shell
 go get "github.com/kislerdm/pulumi-sdk-neon"
 ```
 
-2. Edit the file `main.go`:
+4. Edit the file `main.go`:
 
 ```go
 package main
@@ -72,7 +79,7 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		_, err := resource.NewProject(ctx, "myproject", &resource.ProjectArgs{
-			Name: pulumi.String("myproject"),
+			Name: pulumi.String("myProjectProvisionedWithPulumiGoSDK"),
 		}, pulumi.Protect(true))
 		if err != nil {
 			log.Println(err)
@@ -82,8 +89,8 @@ func main() {
 }
 ```
 
-3. Run `pulumi up -f`
-4. Examine the Neon console: it's expected to see a new project there.
+5. Run `pulumi up -f`
+6. Examine the Neon console: it's expected to see a new project called "myProjectProvisionedWithPulumiGoSDK".
 
 ### Typescript
 
@@ -92,7 +99,7 @@ func main() {
 - nodejs 18+.
 - [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
 
-1. Create a pulumi project by running `pulumi new typescript`
+1. Create a Pulumi project by running `pulumi new typescript`
 2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
 3. Add the SDK as dependency:
 
@@ -143,7 +150,7 @@ Project("myproject", ProjectArgs(name="myproject"))
 - dotnet 6+.
 - [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
 
-1. Create a pulumi project by running `pulumi new csharp`
+1. Create a Pulumi project by running `pulumi new csharp`
 2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
 3. Add the SDK as dependency:
 
@@ -198,7 +205,7 @@ return await Deployment.RunAsync(() =>
 - Gradle >=8.12, <9.0.
 - [Neon API key](https://api-docs.neon.tech/reference/authentication#neon-api-keys) exported as env variable `NEON_API_KEY`.
 
-1. Create a pulumi project by running `pulumi new java-gradle`
+1. Create a Pulumi project by running `pulumi new java-gradle`
 2. Configure the Pulumi secret by running `pulumi config set --secret neon:api_key ${NEON_API_KEY}`.
 3. Add the SDK as dependency to the dependencies in the file `app/build.gradle`:
 

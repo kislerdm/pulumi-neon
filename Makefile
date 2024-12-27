@@ -40,8 +40,10 @@ lint:: ## Lints the provider's codebase.
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 
+
+verify_version:: VERSION_PROVIDER := $(shell jq '.version' schema.json)
 verify_version:: ## Checks that the schema version corresponds to release version.
-	@ if [ "$(shell make read_version)" != "$(VERSION_SET)" ]; then echo inconsistent versions && exit 1; fi
+	@ if [ "$(VERSION_PROVIDER)" != $(VERSION_SET) ]; then echo inconsistent version: schema.json - $(VERSION_PROVIDER), variable - $(VERSION_SET) && exit 1; fi
 
 sdk_go.local:: $(WORKING_DIR)/bin/$(PROVIDER) schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates Go SDK.
 	@ git submodule update --depth 1 --init --recursive --remote -f
@@ -55,16 +57,22 @@ sdk_go:: schema.json sdk-template/go/go.* sdk-template/go/README.md ## Generates
 	@ cd $(WORKING_DIR)/$(GO_SDK) && go mod tidy
 
 sdk_nodejs:: schema.json sdk-template/nodejs/README.md ## Generates Node.js SDK.
-	@ rm -rf sdk-nodejs
-	@ pulumi package gen-sdk schema.json -o sdk-nodejs --language nodejs
-	@ cd sdk-nodejs/nodejs/ && \
+	@ rm -rf sdk/nodejs
+	@ pulumi package gen-sdk schema.json --language nodejs
+	@ cd sdk/nodejs && \
 		npm install && \
 		npm run build && \
 		cp ../../sdk-template/nodejs/README.md bin/README.md && \
 		cp ../../LICENSE package.json package-lock.json bin/ && \
-		sed -i.bak 's/$${VERSION_SDK}/$(VERSION_SDK)/g' bin/package.json && \
-		rm ./bin/package.json.bak
-	@ mv sdk-nodejs/nodejs/bin/* sdk-nodejs/ && rm -r sdk-nodejs/nodejs
+		sed -i '' 's/$${VERSION_SDK}/$(VERSION_SDK)/g' bin/package.json && \
+		mv bin ../sdk-nodejs-temp && rm -rf * && mv ../sdk-nodejs-temp/* . && rm -r ../sdk-nodejs-temp
+
+sdk_nodejs.publish:: VERSION_SET := $(shell jq '.version' sdk/nodejs/package.json)
+sdk_nodejs.publish:: verify_version ## Publishes Node.js SDK to npm.
+	@ if [ -z "${NPM_TOKEN}" ]; then echo "env vriable NPM_TOKEN must be set" && exit 1 ; fi
+	@ cd sdk/nodejs && \
+ 		npm set "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" && \
+ 		if [ -z "${GITHUB_ACTION}" ]; then npm publish --access public; else npm publish --access public --provenance; fi
 
 sdk_python:: schema.json sdk-template/python/README.md ## Generates python SDK.
 	@ rm -rf sdk-python

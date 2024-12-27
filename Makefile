@@ -103,13 +103,21 @@ sdk_python.publish:: $(WORKING_DIR)/sdk/python/bin/dist/*.tar.gz  ## Publishes p
       	twine upload -u "__token__" -p "${PYPI_TOKEN}" $(WORKING_DIR)/sdk/python/bin/dist/* --skip-existing --verbose
 
 sdk_dotnet:: schema.json sdk-template/dotnet/README.md ## Generates .Net SDK.
-	@ rm -rf sdk-dotnet
-	@ pulumi package gen-sdk schema.json -o sdk-dotnet --language dotnet
-	@ cp fig/logo.png sdk-dotnet/dotnet/ && mv sdk-dotnet/dotnet/* sdk-dotnet && rm -r sdk-dotnet/dotnet
-	@ echo $(VERSION_SDK) > sdk-dotnet/version.txt
-	@ cp sdk-template/dotnet/README.md sdk-dotnet/README.md && \
-		cd sdk-dotnet && sed -i '' -e 's|</Project>|  <PropertyGroup>\n    <PackageReadmeFile>README.md</PackageReadmeFile>\n  </PropertyGroup>\n  <ItemGroup>\n    <None Include="README.md" Pack="True" PackagePath="/" />\n  </ItemGroup>\n</Project>|g' *.csproj
-	@ cd sdk-dotnet && dotnet build --verbosity minimal 1>/dev/null
+	@ rm -rf sdk/dotnet
+	@ pulumi package gen-sdk schema.json --language dotnet
+	@ cp fig/logo.png sdk/dotnet/
+	@ echo $(VERSION_SDK) > sdk/dotnet/version.txt
+	@ cp sdk-template/dotnet/README.md sdk/dotnet/README.md && \
+		cd sdk/dotnet && sed -i '' -e 's|</Project>|  <PropertyGroup>\n    <PackageReadmeFile>README.md</PackageReadmeFile>\n  </PropertyGroup>\n  <ItemGroup>\n    <None Include="README.md" Pack="True" PackagePath="/" />\n  </ItemGroup>\n</Project>|g' *.csproj
+
+sdk_dotnet.build:: VERSION_SET := $(shell jq '.version' $(WORKING_DIR)/sdk/dotnet/pulumi-plugin.json | sed 's/"//g')
+sdk_dotnet.build:: verify_version ## Builds .Net SDK dist.
+	@ cd sdk/dotnet && dotnet build --verbosity minimal 1>/dev/null
+
+sdk_dotnet.publish:: $(WORKING_DIR)/sdk/dotnet/bin/Debug/*.nupkg  ## Publishes .Net SDK.
+	@ if [ -z "${NUGET_PUBLISH_KEY}" ]; then echo "NUGET_PUBLISH_KEY env variable must be set"; exit 1; fi
+	@ cd $(WORKING_DIR)/sdk/dotnet/bin/Debug && \
+  		dotnet nuget push "*.nupkg" -k "${NUGET_PUBLISH_KEY}" -s https://api.nuget.org/v3/index.json --skip-duplicate
 
 sdk_java:: schema.json sdk-template/java/README.md sdk-template/java/build.gradle sdk-template/java/settings.gradle ## Generates Java SDK.
 	@ rm -rf sdk-java
